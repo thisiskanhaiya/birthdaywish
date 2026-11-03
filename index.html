@@ -9,9 +9,15 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet" />
     <title>A little birthday magic for Dhanashri</title>
+    <style>
+      .prompt-page-link{position:fixed;right:20px;bottom:20px;z-index:10000;padding:12px 18px;border:1px solid #d88da2;border-radius:999px;background:#fff8fa;color:#673c50;font:600 14px 'DM Sans',sans-serif;text-decoration:none;box-shadow:0 6px 20px #59324622;transition:transform .2s,box-shadow .2s}
+      .prompt-page-link:hover{transform:translateY(-2px);box-shadow:0 9px 24px #59324633}
+      @media(max-width:520px){.prompt-page-link{right:12px;bottom:12px;padding:10px 14px;font-size:12px}}
+    </style>
   </head>
   <body>
     <div id="app"></div>
+    <a class="prompt-page-link" href="/quality-engineering-prompt.html">Open Quality Engineering Prompt</a>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
