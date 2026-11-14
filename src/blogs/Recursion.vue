@@ -1,360 +1,196 @@
 <script setup>
+import { onBeforeUnmount, onMounted, ref } from "vue";
+
 defineEmits(["back"]);
+
+const readingProgress = ref(0);
+
+const updateReadingProgress = () => {
+  const scrollTop = window.scrollY;
+  const scrollHeight =
+    document.documentElement.scrollHeight - window.innerHeight;
+
+  readingProgress.value =
+    scrollHeight > 0 ? Math.min((scrollTop / scrollHeight) * 100, 100) : 0;
+};
+
+onMounted(() => {
+  window.addEventListener("scroll", updateReadingProgress, {
+    passive: true,
+  });
+
+  updateReadingProgress();
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("scroll", updateReadingProgress);
+});
 </script>
 
 <template>
-  <article class="blog-page">
+  <article class="article-page">
+    <div
+      class="reading-progress"
+      :style="{ width: `${readingProgress}%` }"
+    ></div>
 
-    <!-- BACK -->
-    <div class="blog-topbar">
-
-      <button
-        class="blog-back"
-        @click="$emit('back')"
-      >
+    <header class="article-topbar">
+      <button type="button" @click="$emit('back')">
         <span>←</span>
-        all little thoughts
+        Back to stories
       </button>
 
-      <div class="blog-top-mark">
-        little.log / 01
+      <div class="article-mini-brand">
+        <span>l</span>
+        little.log
       </div>
 
-    </div>
-
-
-    <!-- BLOG HEADER -->
-    <header class="blog-header">
-
-      <div class="blog-category">
-        TECH × LIFE
-      </div>
-
-      <h1>
-        Finding the<br />
-        <em>Base Condition.</em>
-      </h1>
-
-      <p class="blog-subtitle">
-        Sometimes life feels a lot like recursion.
-        We keep calling the same version of ourselves,
-        hoping the next iteration somehow returns something different.
-      </p>
-
-      <div class="blog-info">
-
-        <div class="blog-avatar">
-          ↻
-        </div>
-
-        <div>
-          <strong>little.log</strong>
-          <span>5 min read · thought #01</span>
-        </div>
-
-      </div>
-
+      <span class="article-top-number">01 / 01</span>
     </header>
 
+    <section class="article-hero">
+      <div class="article-hero-copy">
+        <div class="article-label">
+          <span>Mindful code</span>
+          <i></i>
+          <span>3 min read</span>
+        </div>
 
-    <!-- ARTICLE -->
-    <div class="blog-body">
-
-      <p class="blog-lead">
-        In programming, recursion happens when a function calls itself.
-        It can be elegant, powerful and surprisingly simple.
-      </p>
-
-      <p>
-        But there is one thing recursion cannot survive without:
-        a <strong>base condition.</strong>
-      </p>
-
-      <p>
-        Without it, the function keeps calling itself again and again.
-        Deeper. And deeper. And deeper.
-      </p>
-
-
-      <!-- VISUAL -->
-      <div class="recursion-visual">
-
-        <span>call()</span>
-
-        <div class="visual-arrow">↓</div>
-
-        <span>call()</span>
-
-        <div class="visual-arrow">↓</div>
-
-        <span>call()</span>
-
-        <div class="visual-arrow">↓</div>
-
-        <span class="visual-question">
-          ...until when?
-        </span>
-
-      </div>
-
-
-      <p>
-        And sometimes, life behaves exactly the same way.
-      </p>
-
-      <p>
-        We wake up. Follow the same routine. Carry the same thoughts.
-        Meet the same situation. Give the same response.
-      </p>
-
-      <p>
-        Tomorrow arrives and somehow the function gets called again.
-      </p>
-
-
-      <blockquote class="blog-quote">
-        Maybe we aren't always stuck.
-        <strong>
-          Maybe we simply haven't found our base condition yet.
-        </strong>
-      </blockquote>
-
-
-      <h2>
-        So... what is a base condition in life?
-      </h2>
-
-      <p>
-        In code, the base condition tells the recursion:
-        <em>this is enough, return now.</em>
-      </p>
-
-      <p>
-        Life probably needs those conditions too.
-      </p>
-
-      <p>
-        Maybe your base condition is finally having the conversation
-        you've been avoiding.
-      </p>
-
-      <p>
-        Maybe it's setting a boundary.
-      </p>
-
-      <p>
-        Maybe it's changing your routine, walking away from something,
-        asking for help, accepting what you cannot change, or simply admitting:
-      </p>
-
-
-      <div class="soft-note">
-
-        <span class="soft-note-icon">
-          🌷
-        </span>
+        <h1>
+          Finding the
+          <span>Base Condition.</span>
+        </h1>
 
         <p>
-          “This iteration is no longer giving me anything new.”
+          When life keeps repeating the same pattern, maybe you do not need
+          another iteration. Maybe you need to know when to return.
         </p>
-
       </div>
 
+      <div class="article-hero-art">
+        <div class="recursive-ring ring-one"></div>
+        <div class="recursive-ring ring-two"></div>
+        <div class="recursive-ring ring-three"></div>
 
-      <h2>
-        But not every recursion needs to stop.
-      </h2>
-
-      <p>
-        That's the interesting part.
-      </p>
-
-      <p>
-        Some loops are beautiful.
-      </p>
-
-      <p>
-        Reading every evening. Practising something you love.
-        Meeting people who make you feel lighter. Building a skill.
-        Starting again after failing.
-      </p>
-
-      <p>
-        These are repetitions too.
-      </p>
-
-      <p>
-        But every iteration leaves something behind.
-      </p>
-
-
-      <!-- TWO LOOP CARDS -->
-      <div class="loop-comparison">
-
-        <div class="loop-card good-loop">
-
-          <span class="loop-emoji">
-            🌱
-          </span>
-
-          <h3>
-            The good recursion
-          </h3>
-
-          <p>
-            Each iteration adds something.
-          </p>
-
-          <ul>
-            <li>+ experience</li>
-            <li>+ peace</li>
-            <li>+ skill</li>
-            <li>+ connection</li>
-          </ul>
-
-          <span class="loop-caption">
-            maybe don't return yet.
-          </span>
-
+        <div class="recursive-center">
+          <span>if</span>
+          <strong>enough</strong>
+          <small>return;</small>
         </div>
 
+        <span class="article-spark article-spark-one">✦</span>
+        <span class="article-spark article-spark-two">✿</span>
+      </div>
+    </section>
 
-        <div class="loop-card bad-loop">
+    <div class="article-content">
+      <p class="article-lead">
+        Recursion is beautiful because a function can solve something by
+        calling itself. But without a base condition, it never knows when to
+        stop.
+      </p>
 
-          <span class="loop-emoji">
-            🍂
-          </span>
+      <p>
+        Some parts of life feel the same. The same routine, thought or
+        situation returns, and we enter it with the same response.
+      </p>
 
-          <h3>
-            The draining recursion
-          </h3>
-
-          <p>
-            Each iteration takes something.
-          </p>
-
-          <ul>
-            <li>- energy</li>
-            <li>- patience</li>
-            <li>- confidence</li>
-            <li>- yourself</li>
-          </ul>
-
-          <span class="loop-caption">
-            find the base condition.
-          </span>
-
+      <div class="code-thought">
+        <div class="code-thought-header">
+          <span></span>
+          <span></span>
+          <span></span>
+          <small>life.js</small>
         </div>
 
+        <code>
+          <span>function repeat(pattern) {</span>
+          <span>&nbsp;&nbsp;if (pattern.isDraining) return;</span>
+          <span>&nbsp;&nbsp;return repeat(pattern);</span>
+          <span>}</span>
+        </code>
       </div>
 
+      <h2>Your exit can be simple.</h2>
 
       <p>
-        The important thing is not to stop every loop.
+        A base condition in life may be a boundary, an honest conversation, a
+        change in routine or finally accepting that something is no longer
+        working.
       </p>
 
-      <p>
-        It is to notice what the loop is doing to you.
-      </p>
-
-
-      <h2>
-        Before the next recursive call...
-      </h2>
-
-      <div class="reflection-list">
-
-        <div class="reflection-item">
-          <span>01</span>
-
-          <p>
-            Is this repetition still adding something to me?
-          </p>
-        </div>
-
-        <div class="reflection-item">
-          <span>02</span>
-
-          <p>
-            Am I continuing because I want to,
-            or because I don't know how to stop?
-          </p>
-        </div>
-
-        <div class="reflection-item">
-          <span>03</span>
-
-          <p>
-            What becomes smaller in me after every iteration?
-          </p>
-        </div>
-
-        <div class="reflection-item">
-          <span>04</span>
-
-          <p>
-            What would my base condition look like?
-          </p>
-        </div>
-
-      </div>
-
-
-      <p>
-        Maybe we don't need to debug our whole life at once.
-      </p>
-
-      <p>
-        Sometimes we only need to look at the loop we're currently
-        inside and ask whether another iteration is really necessary.
-      </p>
-
-
-      <!-- ENDING -->
-      <div class="blog-ending">
-
-        <div class="ending-loop">
-          ↻
-        </div>
-
-        <p>
-          Keep the recursions that help you grow.
-        </p>
-
-        <p>
-          For the ones slowly burning you out,
-          <strong>find your base condition.</strong>
-        </p>
-
-        <span>
-          and let yourself return.
-        </span>
-
-      </div>
-
-
-      <div class="blog-signoff">
+      <aside class="article-highlight">
         <span>✿</span>
+
         <p>
-          Thanks for reading this little thought.
+          Ask yourself: “What needs to become true for me to stop repeating
+          this?”
         </p>
+      </aside>
+
+      <h2>But some loops are worth keeping.</h2>
+
+      <p>
+        Repeating is not always bad. Practice, care, learning and meaningful
+        habits can add something with every iteration.
+      </p>
+
+      <div class="loop-choice">
+        <div class="choice-card value-card">
+          <span class="choice-icon">🌱</span>
+
+          <div>
+            <small>Continue</small>
+            <h3>When it adds value</h3>
+            <p>More clarity, skill, peace or connection.</p>
+          </div>
+        </div>
+
+        <div class="choice-card drain-card">
+          <span class="choice-icon">🍂</span>
+
+          <div>
+            <small>Return</small>
+            <h3>When it drains you</h3>
+            <p>Less energy, confidence, patience or joy.</p>
+          </div>
+        </div>
       </div>
 
+      <div class="article-question">
+        <span>Before the next call...</span>
+
+        <h2>
+          Is this loop growing you,
+          or only repeating you?
+        </h2>
+      </div>
+
+      <p>
+        Keep the recursions that help you become more. For the ones slowly
+        burning you out, define the base condition and allow yourself to exit.
+      </p>
+
+      <div class="article-ending">
+        <span class="ending-symbol">↻</span>
+
+        <p>
+          You do not need to debug your whole life today.
+        </p>
+
+        <strong>
+          Just notice the loop you are currently inside.
+        </strong>
+      </div>
+
+      <div class="article-actions">
+        <button type="button" @click="$emit('back')">
+          <span>←</span>
+          Discover more thoughts
+        </button>
+
+        <span>Thanks for reading ✿</span>
+      </div>
     </div>
-
-
-    <!-- BLOG FOOTER -->
-    <footer class="blog-footer">
-
-      <button @click="$emit('back')">
-        ← back to little.log
-      </button>
-
-      <span>
-        thought #01
-      </span>
-
-    </footer>
-
   </article>
 </template>
