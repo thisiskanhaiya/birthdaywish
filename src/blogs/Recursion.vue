@@ -1,292 +1,232 @@
 <script setup>
+import { onBeforeUnmount, onMounted, ref } from "vue";
+import recursionHero from "../assets/recursion-hero.png";
+
 defineEmits(["back"]);
+
+const readingProgress = ref(0);
+
+function updateReadingProgress() {
+  const pageHeight =
+    document.documentElement.scrollHeight -
+    window.innerHeight;
+
+  readingProgress.value =
+    pageHeight > 0
+      ? Math.min((window.scrollY / pageHeight) * 100, 100)
+      : 0;
+}
+
+onMounted(() => {
+  updateReadingProgress();
+
+  window.addEventListener(
+    "scroll",
+    updateReadingProgress,
+    { passive: true }
+  );
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener(
+    "scroll",
+    updateReadingProgress
+  );
+});
 </script>
 
 <template>
+  <article class="blog-reading-page">
+    <div
+      class="reading-progress"
+      :style="{ width: `${readingProgress}%` }"
+    ></div>
 
-  <article class="reading-page">
-
-    <!-- ARTICLE NAV -->
-
-    <div class="reading-nav">
-
+    <!-- ARTICLE NAVIGATION -->
+    <header class="article-navigation">
       <button
-        class="back-button"
+        type="button"
+        aria-label="Back to all blogs"
         @click="$emit('back')"
       >
         ←
       </button>
 
-      <span>
-        little.log ♡
-      </span>
+      <strong>
+        little.log <span>♡</span>
+      </strong>
 
-      <button class="bookmark-button">
-        ♡
-      </button>
+      <div>
+        <button type="button" aria-label="Save article">
+          ♡
+        </button>
 
-    </div>
-
-
-    <!-- ILLUSTRATION -->
-
-    <section class="reading-art">
-
-      <div class="article-sky">
-
-        <span class="article-cloud cloud-a">
-          ☁
-        </span>
-
-        <span class="article-cloud cloud-b">
-          ☁
-        </span>
-
-        <div class="article-sun"></div>
-
-        <span class="article-quote-art">
-          some loops are<br />
-          meant to end<br />
-          so you can<br />
-          begin again ♡
-        </span>
-
+        <button type="button" aria-label="More options">
+          •••
+        </button>
       </div>
+    </header>
 
+    <!-- ARTICLE HERO -->
+    <section class="article-hero-image">
+      <img
+        :src="recursionHero"
+        alt="A person looking toward a mountain landscape"
+      />
 
-      <div class="big-mountain mountain-a"></div>
-      <div class="big-mountain mountain-b"></div>
-
-      <div class="sitting-person">
-        <div class="person-mini-head"></div>
-        <div class="person-mini-body"></div>
-        <div class="person-bag"></div>
-      </div>
-
+      <p>
+        Some loops<br />
+        are meant to end<br />
+        so you can<br />
+        begin again ♡
+      </p>
     </section>
 
-
-    <!-- ARTICLE -->
-
-    <section class="reading-content">
-
-      <div class="reading-meta">
-        <span class="pink-tag">Life</span>
-        <span>3 min read</span>
+    <!-- ARTICLE CONTENT -->
+    <section class="article-content">
+      <div class="article-meta">
+        <span>Life × Tech</span>
+        <small>3 min read</small>
       </div>
 
       <h1>
-        Finding the
-        <span>Base Condition</span>
+        Finding the<br />
+        Base Condition
       </h1>
 
-      <p class="reading-subtitle">
+      <p class="article-subtitle">
         Sometimes you just need to return.
       </p>
 
-
-      <div class="author-line">
-
+      <div class="article-author">
         <div class="author-avatar">
           l
         </div>
 
         <div>
-          <strong>little.log</strong>
-          <small>thought #01</small>
+          <strong>by little.log</strong>
+          <small>Thought #01</small>
         </div>
 
+        <div class="article-reactions">
+          <span>♡ 412</span>
+          <span>◯ 28</span>
+          <span>⇧</span>
+        </div>
       </div>
 
-
-      <div class="article-text">
-
+      <div class="article-body">
         <p>
-          In programming, recursion happens when
-          something keeps calling itself.
+          In programming, recursion happens when a function
+          calls itself. It’s powerful, but without a base
+          condition, it never stops.
         </p>
 
         <p>
-          Beautiful idea.
-          <strong>
-            Until there's no base condition.
-          </strong>
+          Life can feel the same sometimes. The same routine,
+          thought or situation returns, and we enter it with
+          the same response.
         </p>
 
+        <div class="article-code">
+          <header>
+            <div>
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
 
-        <div class="tiny-code">
+            <small>life.js</small>
+          </header>
 
-          <span>
-            life();
-          </span>
-
-          <span class="code-arrow">
-            ↓
-          </span>
-
-          <span>
-            life();
-          </span>
-
-          <span class="code-arrow">
-            ↓
-          </span>
-
-          <span>
-            life();
-          </span>
-
-          <small>
-            ...okay, but until when?
-          </small>
-
+          <pre><code><span class="code-purple">function</span> repeat(pattern) {
+  <span class="code-purple">if</span> (pattern.isDraining) <span class="code-pink">return</span>;
+  <span class="code-purple">return</span> repeat(pattern);
+}</code></pre>
         </div>
 
-
-        <p>
-          Life does this too.
-        </p>
-
-        <p>
-          Same morning. Same thought.
-          Same situation. Same response.
-        </p>
-
-        <div class="article-sticky pink-sticky">
-
+        <aside class="article-note">
           <span>♡</span>
 
           <p>
-            Maybe the question isn't
-            <strong>“Why am I in this loop?”</strong>
-          </p>
-
-          <p>
-            Maybe it's
+            Maybe the question isn’t
+            “Why am I in this loop?” but
             <strong>“What will help me return?”</strong>
           </p>
+        </aside>
 
-        </div>
-
-
-        <h2>
-          Find your base condition.
-        </h2>
+        <h2>Some loops are worth keeping.</h2>
 
         <p>
-          Maybe it's a boundary.
-          A conversation.
-          A decision.
-          A pause.
-          Or simply accepting that you've
-          learned everything this loop had to teach.
+          Practicing, learning and caring can add something
+          with every iteration. The point is not to escape
+          every loop. The point is to notice what the loop is
+          doing to you.
         </p>
 
-
-        <div class="little-choice">
-
-          <div class="choice grow-choice">
-
+        <div class="article-choices">
+          <div class="article-choice continue">
             <span>🌱</span>
 
             <div>
-              <strong>Still growing?</strong>
+              <small>Continue</small>
+              <strong>When it adds value</strong>
               <p>
-                Maybe one more iteration is worth it.
+                More clarity, skill, peace or connection.
               </p>
             </div>
-
           </div>
 
-
-          <div class="choice exit-choice">
-
+          <div class="article-choice return">
             <span>🍂</span>
 
             <div>
-              <strong>Only draining?</strong>
+              <small>Return</small>
+              <strong>When it drains you</strong>
               <p>
-                Maybe you've found the base condition.
+                Less energy, confidence, patience or joy.
               </p>
             </div>
-
           </div>
-
         </div>
 
-
-        <div class="final-question">
-
-          <small>
-            before calling yourself again...
-          </small>
+        <div class="article-question">
+          <small>Before the next call...</small>
 
           <p>
-            Is this loop
-            <strong>growing you</strong>
-            or only
-            <strong>repeating you?</strong>
+            Is this loop growing you or only repeating you?
           </p>
-
         </div>
 
-
         <p>
-          Not every recursion is bad.
-          Some routines build us.
-          Some people make every iteration better.
-          Some practices deserve repeating.
+          Keep the recursions that help you grow. When every
+          iteration takes more than it gives, define the base
+          condition and allow yourself to return.
         </p>
 
-        <p>
-          Keep those.
-        </p>
-
-        <p>
-          But when each iteration takes more than
-          it gives, you don't need another call.
-        </p>
-
-
-        <div class="end-note">
-
-          <span class="end-loop">
-            ↻
-          </span>
+        <div class="article-ending">
+          <span>↻</span>
 
           <p>
-            Find the base condition.
+            You do not need to debug your entire life today.
           </p>
 
           <strong>
-            And let yourself return.
+            Just notice the loop you are currently inside.
           </strong>
-
-          <span class="tiny-heart">
-            ♡
-          </span>
-
         </div>
-
       </div>
 
-
-      <div class="article-bottom">
-
-        <span>
-          ✿ thanks for reading
-        </span>
-
-        <button
-          @click="$emit('back')"
-        >
-          more little thoughts →
+      <footer class="article-footer">
+        <button type="button" @click="$emit('back')">
+          ← Back to all thoughts
         </button>
 
-      </div>
-
+        <span>
+          keep<br />
+          going ♡
+        </span>
+      </footer>
     </section>
-
   </article>
-
 </template>
