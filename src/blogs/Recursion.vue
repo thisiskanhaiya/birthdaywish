@@ -1,196 +1,292 @@
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from "vue";
-
 defineEmits(["back"]);
-
-const readingProgress = ref(0);
-
-const updateReadingProgress = () => {
-  const scrollTop = window.scrollY;
-  const scrollHeight =
-    document.documentElement.scrollHeight - window.innerHeight;
-
-  readingProgress.value =
-    scrollHeight > 0 ? Math.min((scrollTop / scrollHeight) * 100, 100) : 0;
-};
-
-onMounted(() => {
-  window.addEventListener("scroll", updateReadingProgress, {
-    passive: true,
-  });
-
-  updateReadingProgress();
-});
-
-onBeforeUnmount(() => {
-  window.removeEventListener("scroll", updateReadingProgress);
-});
 </script>
 
 <template>
-  <article class="article-page">
-    <div
-      class="reading-progress"
-      :style="{ width: `${readingProgress}%` }"
-    ></div>
 
-    <header class="article-topbar">
-      <button type="button" @click="$emit('back')">
-        <span>←</span>
-        Back to stories
+  <article class="reading-page">
+
+    <!-- ARTICLE NAV -->
+
+    <div class="reading-nav">
+
+      <button
+        class="back-button"
+        @click="$emit('back')"
+      >
+        ←
       </button>
 
-      <div class="article-mini-brand">
-        <span>l</span>
-        little.log
+      <span>
+        little.log ♡
+      </span>
+
+      <button class="bookmark-button">
+        ♡
+      </button>
+
+    </div>
+
+
+    <!-- ILLUSTRATION -->
+
+    <section class="reading-art">
+
+      <div class="article-sky">
+
+        <span class="article-cloud cloud-a">
+          ☁
+        </span>
+
+        <span class="article-cloud cloud-b">
+          ☁
+        </span>
+
+        <div class="article-sun"></div>
+
+        <span class="article-quote-art">
+          some loops are<br />
+          meant to end<br />
+          so you can<br />
+          begin again ♡
+        </span>
+
       </div>
 
-      <span class="article-top-number">01 / 01</span>
-    </header>
 
-    <section class="article-hero">
-      <div class="article-hero-copy">
-        <div class="article-label">
-          <span>Mindful code</span>
-          <i></i>
-          <span>3 min read</span>
-        </div>
+      <div class="big-mountain mountain-a"></div>
+      <div class="big-mountain mountain-b"></div>
 
-        <h1>
-          Finding the
-          <span>Base Condition.</span>
-        </h1>
-
-        <p>
-          When life keeps repeating the same pattern, maybe you do not need
-          another iteration. Maybe you need to know when to return.
-        </p>
+      <div class="sitting-person">
+        <div class="person-mini-head"></div>
+        <div class="person-mini-body"></div>
+        <div class="person-bag"></div>
       </div>
 
-      <div class="article-hero-art">
-        <div class="recursive-ring ring-one"></div>
-        <div class="recursive-ring ring-two"></div>
-        <div class="recursive-ring ring-three"></div>
-
-        <div class="recursive-center">
-          <span>if</span>
-          <strong>enough</strong>
-          <small>return;</small>
-        </div>
-
-        <span class="article-spark article-spark-one">✦</span>
-        <span class="article-spark article-spark-two">✿</span>
-      </div>
     </section>
 
-    <div class="article-content">
-      <p class="article-lead">
-        Recursion is beautiful because a function can solve something by
-        calling itself. But without a base condition, it never knows when to
-        stop.
-      </p>
 
-      <p>
-        Some parts of life feel the same. The same routine, thought or
-        situation returns, and we enter it with the same response.
-      </p>
+    <!-- ARTICLE -->
 
-      <div class="code-thought">
-        <div class="code-thought-header">
-          <span></span>
-          <span></span>
-          <span></span>
-          <small>life.js</small>
-        </div>
+    <section class="reading-content">
 
-        <code>
-          <span>function repeat(pattern) {</span>
-          <span>&nbsp;&nbsp;if (pattern.isDraining) return;</span>
-          <span>&nbsp;&nbsp;return repeat(pattern);</span>
-          <span>}</span>
-        </code>
+      <div class="reading-meta">
+        <span class="pink-tag">Life</span>
+        <span>3 min read</span>
       </div>
 
-      <h2>Your exit can be simple.</h2>
+      <h1>
+        Finding the
+        <span>Base Condition</span>
+      </h1>
 
-      <p>
-        A base condition in life may be a boundary, an honest conversation, a
-        change in routine or finally accepting that something is no longer
-        working.
+      <p class="reading-subtitle">
+        Sometimes you just need to return.
       </p>
 
-      <aside class="article-highlight">
-        <span>✿</span>
+
+      <div class="author-line">
+
+        <div class="author-avatar">
+          l
+        </div>
+
+        <div>
+          <strong>little.log</strong>
+          <small>thought #01</small>
+        </div>
+
+      </div>
+
+
+      <div class="article-text">
 
         <p>
-          Ask yourself: “What needs to become true for me to stop repeating
-          this?”
+          In programming, recursion happens when
+          something keeps calling itself.
         </p>
-      </aside>
 
-      <h2>But some loops are worth keeping.</h2>
+        <p>
+          Beautiful idea.
+          <strong>
+            Until there's no base condition.
+          </strong>
+        </p>
 
-      <p>
-        Repeating is not always bad. Practice, care, learning and meaningful
-        habits can add something with every iteration.
-      </p>
 
-      <div class="loop-choice">
-        <div class="choice-card value-card">
-          <span class="choice-icon">🌱</span>
+        <div class="tiny-code">
 
-          <div>
-            <small>Continue</small>
-            <h3>When it adds value</h3>
-            <p>More clarity, skill, peace or connection.</p>
-          </div>
+          <span>
+            life();
+          </span>
+
+          <span class="code-arrow">
+            ↓
+          </span>
+
+          <span>
+            life();
+          </span>
+
+          <span class="code-arrow">
+            ↓
+          </span>
+
+          <span>
+            life();
+          </span>
+
+          <small>
+            ...okay, but until when?
+          </small>
+
         </div>
 
-        <div class="choice-card drain-card">
-          <span class="choice-icon">🍂</span>
 
-          <div>
-            <small>Return</small>
-            <h3>When it drains you</h3>
-            <p>Less energy, confidence, patience or joy.</p>
-          </div>
+        <p>
+          Life does this too.
+        </p>
+
+        <p>
+          Same morning. Same thought.
+          Same situation. Same response.
+        </p>
+
+        <div class="article-sticky pink-sticky">
+
+          <span>♡</span>
+
+          <p>
+            Maybe the question isn't
+            <strong>“Why am I in this loop?”</strong>
+          </p>
+
+          <p>
+            Maybe it's
+            <strong>“What will help me return?”</strong>
+          </p>
+
         </div>
-      </div>
 
-      <div class="article-question">
-        <span>Before the next call...</span>
 
         <h2>
-          Is this loop growing you,
-          or only repeating you?
+          Find your base condition.
         </h2>
-      </div>
-
-      <p>
-        Keep the recursions that help you become more. For the ones slowly
-        burning you out, define the base condition and allow yourself to exit.
-      </p>
-
-      <div class="article-ending">
-        <span class="ending-symbol">↻</span>
 
         <p>
-          You do not need to debug your whole life today.
+          Maybe it's a boundary.
+          A conversation.
+          A decision.
+          A pause.
+          Or simply accepting that you've
+          learned everything this loop had to teach.
         </p>
 
-        <strong>
-          Just notice the loop you are currently inside.
-        </strong>
+
+        <div class="little-choice">
+
+          <div class="choice grow-choice">
+
+            <span>🌱</span>
+
+            <div>
+              <strong>Still growing?</strong>
+              <p>
+                Maybe one more iteration is worth it.
+              </p>
+            </div>
+
+          </div>
+
+
+          <div class="choice exit-choice">
+
+            <span>🍂</span>
+
+            <div>
+              <strong>Only draining?</strong>
+              <p>
+                Maybe you've found the base condition.
+              </p>
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div class="final-question">
+
+          <small>
+            before calling yourself again...
+          </small>
+
+          <p>
+            Is this loop
+            <strong>growing you</strong>
+            or only
+            <strong>repeating you?</strong>
+          </p>
+
+        </div>
+
+
+        <p>
+          Not every recursion is bad.
+          Some routines build us.
+          Some people make every iteration better.
+          Some practices deserve repeating.
+        </p>
+
+        <p>
+          Keep those.
+        </p>
+
+        <p>
+          But when each iteration takes more than
+          it gives, you don't need another call.
+        </p>
+
+
+        <div class="end-note">
+
+          <span class="end-loop">
+            ↻
+          </span>
+
+          <p>
+            Find the base condition.
+          </p>
+
+          <strong>
+            And let yourself return.
+          </strong>
+
+          <span class="tiny-heart">
+            ♡
+          </span>
+
+        </div>
+
       </div>
 
-      <div class="article-actions">
-        <button type="button" @click="$emit('back')">
-          <span>←</span>
-          Discover more thoughts
+
+      <div class="article-bottom">
+
+        <span>
+          ✿ thanks for reading
+        </span>
+
+        <button
+          @click="$emit('back')"
+        >
+          more little thoughts →
         </button>
 
-        <span>Thanks for reading ✿</span>
       </div>
-    </div>
+
+    </section>
+
   </article>
+
 </template>
