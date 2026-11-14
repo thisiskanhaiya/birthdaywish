@@ -1,500 +1,1067 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { ref } from "vue";
 
-const galaxyMode = ref(false)
-const attempts = ref(0)
-const wishCaught = ref(false)
-const deliveryReady = ref(false)
-const soundOn = ref(false)
-const pointerPosition = ref({ x: 0, y: 0 })
-const candlesLit = ref(true)
-const stickerCanvas = ref(null)
-let renderer
-let resizeObserver
-let animationFrame
-let starMeshes = []
-let audioContext
-let ambientGain
-let tuneGain
-let ambientOscillators = []
-let fluteTimer
-let deliveryTimer
+const isReading = ref(false);
 
-const skyStars = Array.from({ length: 72 }, (_, index) => ({
-  id: index,
-  x: (index * 47 + 13) % 100,
-  y: (index * 67 + 19) % 100,
-  size: index % 9 === 0 ? 3 : index % 3 === 0 ? 2 : 1,
-  delay: `${(index % 13) * -0.37}s`,
-  duration: `${2.5 + (index % 8) * 0.45}s`
-}))
+const openBlog = () => {
+  isReading.value = true;
+  window.scrollTo({ top: 0, behavior: "smooth" });
+};
 
-const targetPositions = [
-  { x: 70, y: 30 },
-  { x: 25, y: 68 },
-  { x: 61, y: 48 }
-]
-
-const targetStyle = computed(() => ({
-  left: `${targetPositions[Math.min(attempts.value, 2)].x}%`,
-  top: `${targetPositions[Math.min(attempts.value, 2)].y}%`
-}))
-
-const skyStyle = computed(() => ({
-  '--near-x': `${pointerPosition.value.x}px`,
-  '--near-y': `${pointerPosition.value.y}px`,
-  '--far-x': `${pointerPosition.value.x * -0.35}px`,
-  '--far-y': `${pointerPosition.value.y * -0.35}px`
-}))
-
-const startWishJourney = () => {
-  galaxyMode.value = true
-  attempts.value = 0
-  wishCaught.value = false
-  deliveryReady.value = false
-  soundOn.value = true
-  startAmbientSound()
-  playChime([523, 784])
-}
-
-const moveSky = (event) => {
-  const bounds = event.currentTarget.getBoundingClientRect()
-  pointerPosition.value = {
-    x: ((event.clientX - bounds.left) / bounds.width - 0.5) * 26,
-    y: ((event.clientY - bounds.top) / bounds.height - 0.5) * 20
-  }
-}
-
-const attemptToCatchWish = () => {
-  if (wishCaught.value) return
-
-  attempts.value += 1
-  if (attempts.value < 3) {
-    playChime(attempts.value === 1 ? [392] : [349, 440])
-    return
-  }
-
-  wishCaught.value = true
-  playChime([523, 659, 784, 1047])
-  deliveryTimer = window.setTimeout(() => {
-    deliveryReady.value = true
-  }, 750)
-}
-
-const toggleSound = () => {
-  soundOn.value = !soundOn.value
-  if (soundOn.value) startAmbientSound()
-  else stopAmbientSound()
-}
-
-const closeGalaxy = () => {
-  galaxyMode.value = false
-  stopAmbientSound()
-}
-
-function getAudioContext() {
-  if (!audioContext) {
-    const AudioContextConstructor = window.AudioContext || window.webkitAudioContext
-    if (AudioContextConstructor) audioContext = new AudioContextConstructor()
-  }
-  if (audioContext?.state === 'suspended') void audioContext.resume()
-  return audioContext
-}
-
-function startAmbientSound() {
-  const context = getAudioContext()
-  if (!context || ambientOscillators.length) return
-
-  ambientGain = context.createGain()
-  ambientGain.gain.setValueAtTime(0.0001, context.currentTime)
-  ambientGain.gain.exponentialRampToValueAtTime(0.012, context.currentTime + 1.4)
-  ambientGain.connect(context.destination)
-  tuneGain = context.createGain()
-  tuneGain.gain.value = 0.8
-  tuneGain.connect(context.destination)
-
-  for (const [frequency, type] of [[110, 'sine'], [164.81, 'triangle']]) {
-    const oscillator = context.createOscillator()
-    oscillator.type = type
-    oscillator.frequency.value = frequency
-    oscillator.connect(ambientGain)
-    oscillator.start()
-    ambientOscillators.push(oscillator)
-  }
-  playFlutePhrase()
-}
-
-function stopAmbientSound() {
-  window.clearTimeout(fluteTimer)
-  if (ambientGain && audioContext) {
-    ambientGain.gain.setTargetAtTime(0.0001, audioContext.currentTime, 0.15)
-  }
-  if (tuneGain && audioContext) {
-    tuneGain.gain.setTargetAtTime(0.0001, audioContext.currentTime, 0.08)
-  }
-  ambientOscillators.forEach((oscillator) => oscillator.stop())
-  ambientOscillators = []
-  ambientGain = null
-  tuneGain = null
-}
-
-function playFlutePhrase() {
-  const context = audioContext
-  if (!soundOn.value || !context || !tuneGain) return
-
-  const notes = [523.25, 587.33, 659.25, 783.99, 659.25, 587.33, 523.25, 392, 523.25, 587.33, 659.25, 587.33, 523.25]
-  const beat = 0.34
-
-  notes.forEach((frequency, index) => {
-    const startAt = context.currentTime + 0.08 + index * beat
-    const oscillator = context.createOscillator()
-    const vibrato = context.createOscillator()
-    const vibratoDepth = context.createGain()
-    const filter = context.createBiquadFilter()
-    const volume = context.createGain()
-
-    oscillator.type = 'sine'
-    oscillator.frequency.setValueAtTime(frequency, startAt)
-    vibrato.frequency.value = 5.2
-    vibratoDepth.gain.value = 4
-    vibrato.connect(vibratoDepth)
-    vibratoDepth.connect(oscillator.detune)
-    filter.type = 'lowpass'
-    filter.frequency.value = 2200
-    volume.gain.setValueAtTime(0.0001, startAt)
-    volume.gain.exponentialRampToValueAtTime(0.075, startAt + 0.055)
-    volume.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.31)
-    oscillator.connect(filter)
-    filter.connect(volume)
-    volume.connect(tuneGain)
-    oscillator.start(startAt)
-    vibrato.start(startAt)
-    oscillator.stop(startAt + 0.33)
-    vibrato.stop(startAt + 0.34)
-  })
-
-  fluteTimer = window.setTimeout(playFlutePhrase, notes.length * beat * 1000 + 500)
-}
-
-function playChime(notes) {
-  if (!soundOn.value) return
-  const context = getAudioContext()
-  if (!context) return
-
-  notes.forEach((frequency, index) => {
-    const startAt = context.currentTime + index * 0.11
-    const oscillator = context.createOscillator()
-    const volume = context.createGain()
-    oscillator.type = 'sine'
-    oscillator.frequency.setValueAtTime(frequency, startAt)
-    volume.gain.setValueAtTime(0.0001, startAt)
-    volume.gain.exponentialRampToValueAtTime(0.075, startAt + 0.025)
-    volume.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.42)
-    oscillator.connect(volume)
-    volume.connect(context.destination)
-    oscillator.start(startAt)
-    oscillator.stop(startAt + 0.44)
-  })
-}
-
-onMounted(async () => {
-  const THREE = await import('three')
-  const canvas = stickerCanvas.value
-  const scene = new THREE.Scene()
-  const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 40)
-  camera.position.set(0, 0, 8)
-
-  renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true })
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-  renderer.outputColorSpace = THREE.SRGBColorSpace
-  renderer.toneMapping = THREE.ACESFilmicToneMapping
-  renderer.setClearColor(0x000000, 0)
-
-  scene.add(new THREE.AmbientLight(0xffffff, 2.1))
-  const keyLight = new THREE.DirectionalLight(0xfff0df, 3.2)
-  keyLight.position.set(-3, 5, 6)
-  scene.add(keyLight)
-
-  const starShape = new THREE.Shape()
-  for (let point = 0; point < 10; point += 1) {
-    const radius = point % 2 === 0 ? 0.48 : 0.22
-    const angle = point * Math.PI / 5 - Math.PI / 2
-    const x = Math.cos(angle) * radius
-    const y = Math.sin(angle) * radius
-    if (point === 0) starShape.moveTo(x, y)
-    else starShape.lineTo(x, y)
-  }
-  starShape.closePath()
-
-  const starGeometry = new THREE.ExtrudeGeometry(starShape, {
-    depth: 0.14,
-    bevelEnabled: true,
-    bevelSegments: 3,
-    steps: 1,
-    bevelSize: 0.045,
-    bevelThickness: 0.04
-  })
-  starGeometry.center()
-
-  const starMaterials = [
-    new THREE.MeshStandardMaterial({ color: '#f2a94f', roughness: 0.3, metalness: 0.04 }),
-    new THREE.MeshStandardMaterial({ color: '#7eb3a4', roughness: 0.34, metalness: 0.08 }),
-    new THREE.MeshStandardMaterial({ color: '#e989a3', roughness: 0.32, metalness: 0.05 })
-  ]
-  const starPositions = [
-    [-2.05, 0.42, 0.12, 0.88],
-    [2.12, 0.95, -0.35, 0.7],
-    [-2.12, -0.68, -0.4, 0.55],
-    [2.15, -0.74, 0.3, 0.48]
-  ]
-
-  starMeshes = starPositions.map(([x, y, z, scale], index) => {
-    const star = new THREE.Mesh(starGeometry, starMaterials[index % starMaterials.length])
-    star.position.set(x, y, z)
-    star.scale.setScalar(scale)
-    star.userData.phase = index * 1.7
-    star.userData.baseY = y
-    scene.add(star)
-    return star
-  })
-
-  const resize = () => {
-    const { width, height } = canvas.parentElement.getBoundingClientRect()
-    if (!width || !height) return
-    renderer.setSize(width, height, false)
-    camera.aspect = width / height
-    camera.updateProjectionMatrix()
-  }
-  resizeObserver = new ResizeObserver(resize)
-  resizeObserver.observe(canvas.parentElement)
-  resize()
-
-  const clock = new THREE.Clock()
-  const animate = () => {
-    const time = clock.getElapsedTime()
-    starMeshes.forEach((star) => {
-      star.rotation.y = Math.sin(time * 0.7 + star.userData.phase) * 0.48
-      star.rotation.x = Math.cos(time * 0.55 + star.userData.phase) * 0.12
-      star.position.y = star.userData.baseY + Math.sin(time + star.userData.phase) * 0.08
-    })
-    renderer.render(scene, camera)
-    animationFrame = requestAnimationFrame(animate)
-  }
-  animate()
-})
-
-onBeforeUnmount(() => {
-  cancelAnimationFrame(animationFrame)
-  resizeObserver?.disconnect()
-  renderer?.dispose()
-  window.clearTimeout(deliveryTimer)
-  stopAmbientSound()
-  void audioContext?.close()
-})
+const closeBlog = () => {
+  isReading.value = false;
+  window.scrollTo({ top: 0, behavior: "smooth" });
+};
 </script>
 
 <template>
-  <main class="birthday-page" :class="{ 'galaxy-theme': galaxyMode, 'cartoon-theme': wishCaught }">
-    <div class="confetti confetti-one" aria-hidden="true">✦</div>
-    <div class="confetti confetti-two" aria-hidden="true">✷</div>
-    <div class="confetti confetti-three" aria-hidden="true">✧</div>
-    <div class="confetti confetti-four" aria-hidden="true">✿</div>
+  <main class="app">
+    <nav class="navbar">
+      <button class="brand" @click="closeBlog">
+        <span class="brand-icon">↻</span>
+        <span>Soft Loops</span>
+      </button>
 
-    <header class="topline">
-      <span class="tiny-star" aria-hidden="true">✦</span>
-      <span>Birthday dispatch for Dhanashri</span>
-      <span class="tiny-star" aria-hidden="true">✦</span>
-    </header>
+      <span class="nav-note">Thoughts about life, one loop at a time.</span>
+    </nav>
 
-    <section class="birthday-card" aria-labelledby="birthday-title">
-      <div class="card-copy">
-        <p class="eyebrow"><span class="sparkle">✦</span> Today is all about you <span class="sparkle">✦</span></p>
-        <h1 id="birthday-title">Happy birthday,<br /><span>Dhanashri!</span></h1>
-        <p class="intro">For the girl whose sticker replies deserve their own museum.</p>
-      </div>
+    <!-- HOME PAGE -->
+    <section v-if="!isReading" class="home-page">
+      <div class="floating-shape shape-one"></div>
+      <div class="floating-shape shape-two"></div>
+      <div class="floating-shape shape-three"></div>
 
-      <div class="cake-stage" aria-label="A little pink birthday cake with candles">
-        <canvas ref="stickerCanvas" class="sticker-canvas" aria-hidden="true"></canvas>
-        <div class="floating-sticker sticker-chick" aria-hidden="true"><span>🐥</span><b>tiny boss</b></div>
-        <div class="floating-sticker sticker-cat" aria-hidden="true"><span>😎</span><b>cool-ish</b></div>
-        <div class="floating-sticker sticker-frog" aria-hidden="true"><span>🐸</span><b>cake patrol</b></div>
-        <div class="cake-shadow"></div>
-        <div class="cake">
-          <div class="cake-topper"><span>D</span><i>✦</i></div>
-          <div class="candle-row">
-            <button
-              v-for="(candle, index) in 3"
-              :key="candle"
-              class="candle"
-              :class="[`candle-${index + 1}`, { 'is-lit': candlesLit }]"
-              :aria-label="candlesLit ? 'Blow out the birthday candles' : 'Light the birthday candles again'"
-              @click="candlesLit = !candlesLit"
-            >
-              <span v-if="candlesLit" class="flame" aria-hidden="true"></span>
+      <header class="hero">
+        <span class="eyebrow">A small corner for thoughtful minds</span>
+
+        <h1>
+          Some loops repeat<br />
+          until we understand them.
+        </h1>
+
+        <p class="hero-description">
+          A gentle blog about patterns, pauses, growth and the base
+          conditions that help us move forward.
+        </p>
+
+        <div class="scroll-hint">
+          <span>Today’s reflection</span>
+          <span class="arrow">↓</span>
+        </div>
+      </header>
+
+      <section class="featured-section">
+        <article class="blog-card" @click="openBlog">
+          <div class="card-visual">
+            <div class="loop-art">
+              <span class="loop loop-one"></span>
+              <span class="loop loop-two"></span>
+              <span class="loop loop-three"></span>
+              <div class="center-message">
+                <span>repeat</span>
+                <strong>↻</strong>
+                <span>reflect</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-content">
+            <div class="post-meta">
+              <span class="category">Life Notes</span>
+              <span>5 min read</span>
+            </div>
+
+            <h2>Finding the Base Condition</h2>
+
+            <p>
+              Sometimes life feels like recursion. We repeat the same routines,
+              thoughts and situations without knowing when or how to stop.
+            </p>
+
+            <button class="read-button" @click.stop="openBlog">
+              Read this reflection
+              <span>→</span>
             </button>
           </div>
-          <div class="cake-upper">
-            <span class="icing-drip drip-one"></span>
-            <span class="icing-drip drip-two"></span>
-            <span class="icing-drip drip-three"></span>
-            <span class="cake-decoration deco-one">✿</span>
-            <span class="cake-decoration deco-two">✦</span>
-            <span class="cake-decoration deco-three">✿</span>
-          </div>
-          <div class="cake-lower">
-            <span class="lower-decoration lower-one">✦</span>
-            <span class="lower-decoration lower-two">●</span>
-            <span class="lower-decoration lower-three">✦</span>
-            <span class="lower-decoration lower-four">●</span>
-          </div>
-          <div class="cake-plate"></div>
-        </div>
-        <div class="stage-sparkle sparkle-a" aria-hidden="true">✧</div>
-        <div class="stage-sparkle sparkle-b" aria-hidden="true">✦</div>
-        <div class="stage-sparkle sparkle-c" aria-hidden="true">✧</div>
-      </div>
+        </article>
+      </section>
 
-      <div class="wish-area">
-        <button class="wish-button" type="button" @click="startWishJourney">
-          <span>Chase your birthday wish</span>
-          <span class="button-sparkle" aria-hidden="true">✷</span>
-        </button>
-      </div>
+      <footer class="home-footer">
+        <span>Made with calm thoughts</span>
+        <span class="tiny-flower">✿</span>
+        <span>and a little recursion</span>
+      </footer>
     </section>
 
-    <footer class="footer-note">Cake calories are on vacation today.</footer>
+    <!-- BLOG READING PAGE -->
+    <section v-else class="article-page">
+      <button class="back-button" @click="closeBlog">
+        <span>←</span>
+        Back to home
+      </button>
 
-    <Transition name="galaxy">
-      <section
-        v-if="galaxyMode"
-        class="galaxy-overlay"
-        :class="{ 'universe-warm': attempts === 1, 'universe-cartoon': attempts >= 2 || wishCaught }"
-        :style="skyStyle"
-        aria-label="Dhanashri's birthday wish journey"
-        @pointermove="moveSky"
-      >
-        <div class="galaxy-nebula nebula-one" aria-hidden="true"></div>
-        <div class="galaxy-nebula nebula-two" aria-hidden="true"></div>
-        <div class="starfield" aria-hidden="true">
-          <i
-            v-for="star in skyStars"
-            :key="star.id"
-            class="sky-star"
-            :style="{
-              left: `${star.x}%`,
-              top: `${star.y}%`,
-              width: `${star.size}px`,
-              height: `${star.size}px`,
-              animationDelay: star.delay,
-              animationDuration: star.duration
-            }"
-          ></i>
-        </div>
+      <article class="article">
+        <header class="article-header">
+          <div class="article-tag">Life Notes · 5 min read</div>
 
-        <header class="galaxy-toolbar">
-          <button class="sound-toggle" type="button" :aria-pressed="soundOn" @click="toggleSound">
-            <span aria-hidden="true">{{ soundOn ? '♫' : '♪' }}</span>
-            {{ soundOn ? 'Sound on' : 'Sound off' }}
-          </button>
-          <button class="galaxy-close" type="button" aria-label="Return to the birthday page" @click="closeGalaxy">×</button>
+          <h1>Finding the Base Condition</h1>
+
+          <p class="article-introduction">
+            Maybe we are not always stuck. Maybe we are simply repeating the
+            same function while waiting to discover what can help us return.
+          </p>
+
+          <div class="author-row">
+            <div class="author-avatar">↻</div>
+            <div>
+              <strong>Soft Loops</strong>
+              <span>A reflection on recursion and real life</span>
+            </div>
+          </div>
         </header>
 
-        <div class="galaxy-content">
-          <template v-if="!wishCaught">
-            <div class="mission-copy" aria-live="polite">
-              <p class="galaxy-kicker">A BIRTHDAY WISH IS LOOSE</p>
-              <h2>{{ attempts === 0 ? 'There it goes!' : attempts === 1 ? 'Whoosh! It changed lanes.' : 'It did a tiny loop-de-loop!' }}</h2>
-              <p>{{ attempts === 0 ? 'A shooting star is carrying something for you.' : attempts === 1 ? 'That wish zipped off with another star. Look, it popped up over there!' : 'It is showing off now. One more try, birthday girl!' }}</p>
-            </div>
-            <button
-              class="wish-star"
-              :style="targetStyle"
-              type="button"
-              aria-label="Catch the shooting star and birthday card"
-              @click="attemptToCatchWish"
-            >
-              <span class="wish-star-tail" aria-hidden="true"></span>
-              <span class="wish-star-symbol" aria-hidden="true">✦</span>
-              <span class="wish-card-tag" aria-hidden="true">D <i>✦</i></span>
-            </button>
-            <div class="helper-track" :class="`helper-step-${Math.min(attempts, 3)}`" aria-hidden="true">
-              <svg viewBox="0 0 90 112">
-                <path d="M22 105h15m23 0h15" stroke="#f5d477" stroke-width="8" stroke-linecap="round" />
-                <path d="M31 70q14-12 29 0l6 30H25z" fill="#86c7b1" />
-                <path d="M34 96l-3 9m29-9 4 9" stroke="#efc29f" stroke-width="8" stroke-linecap="round" />
-                <path d="M31 72 17 81m42-9 12-10" stroke="#efc29f" stroke-width="8" stroke-linecap="round" />
-                <circle cx="46" cy="42" r="27" fill="#efc29f" />
-                <path d="M19 42q-3-31 25-32 31 2 29 30l-11-8q-17 4-31-7l-9 15z" fill="#624331" />
-                <circle cx="37" cy="44" r="2.5" fill="#523c45" />
-                <circle cx="55" cy="44" r="2.5" fill="#523c45" />
-                <path d="M39 55q7 6 14 0" fill="none" stroke="#a84e69" stroke-width="2.5" stroke-linecap="round" />
-              </svg>
-              <span>tiny helper</span>
-            </div>
-            <p class="galaxy-hint">The wish is getting away…</p>
-          </template>
+        <div class="article-divider">
+          <span>✿</span>
+        </div>
 
-          <div v-else-if="!deliveryReady" class="caught-copy" role="status">
-            <span class="caught-burst" aria-hidden="true">✦</span>
-            <p class="galaxy-kicker">GOTCHA!</p>
-            <h2>Your wish has a delivery buddy.</h2>
+        <div class="article-content">
+          <p class="opening-paragraph">
+            In programming, recursion happens when a function calls itself.
+            Without a base condition, that function continues calling itself
+            until the system runs out of space.
+          </p>
+
+          <p>
+            Life can sometimes feel surprisingly similar.
+          </p>
+
+          <p>
+            We wake up, follow the same routine, carry the same thoughts and
+            react to situations in the same familiar way. The days keep
+            repeating. We remain inside the loop, hoping that the next
+            iteration will somehow feel different.
+          </p>
+
+          <blockquote>
+            “When life begins to feel recursive, do not only ask why the loop
+            exists. Ask what your base condition could be.”
+          </blockquote>
+
+          <h2>What is your base condition?</h2>
+
+          <p>
+            A base condition is the point where recursion stops. In real life,
+            it might be a decision, an honest conversation, a boundary, a
+            change in routine or simply accepting that something is no longer
+            working.
+          </p>
+
+          <p>
+            If a situation is draining your energy, increasing your frustration
+            and slowly burning you out, you may not need another iteration.
+            You may need a base condition.
+          </p>
+
+          <div class="reflection-box">
+            <span class="reflection-icon">☁</span>
+
+            <div>
+              <h3>A small pause</h3>
+              <p>
+                Ask yourself: “What needs to become true for me to leave this
+                loop?”
+              </p>
+            </div>
           </div>
 
-          <div v-else class="delivery-stage">
-            <p class="galaxy-kicker">SPECIAL DELIVERY FROM THE STARS</p>
-            <h2>Your wish made it, Dhanashri!</h2>
-            <p class="delivery-caption">A tiny helper had to take the scenic route.</p>
+          <h2>Not every recursion is bad</h2>
 
-            <div class="delivery-scene">
-              <svg class="delivery-art" viewBox="0 0 520 240" role="img" aria-labelledby="delivery-title delivery-description">
-                <title id="delivery-title">A little helper delivers a birthday card to Dhanashri</title>
-                <desc id="delivery-description">A smiling child runs in with a tiny birthday card while a cartoon girl waits with open arms.</desc>
-                <path d="M38 207 Q260 194 482 207" fill="none" stroke="#7889bc" stroke-width="2" stroke-linecap="round" opacity=".55" />
-                <g class="waiting-girl">
-                  <path d="M374 155 Q401 134 430 155 L446 203 L358 203Z" fill="#f2a4b7" />
-                  <path d="M382 195 L379 218 M422 195 L426 218" stroke="#efc4a4" stroke-width="12" stroke-linecap="round" />
-                  <path d="M373 218 L383 218 M421 218 L433 218" stroke="#f8e5ca" stroke-width="8" stroke-linecap="round" />
-                  <path d="M374 157 Q348 165 338 150 M437 157 Q455 145 461 132" fill="none" stroke="#efc4a4" stroke-width="11" stroke-linecap="round" />
-                  <circle cx="401" cy="112" r="39" fill="#efc29f" />
-                  <path d="M363 113 Q355 66 400 66 Q445 68 440 118 L432 103 Q422 92 416 83 Q395 103 368 99Z" fill="#543748" />
-                  <path d="M369 82 Q350 92 363 111 M435 82 Q453 94 440 112" fill="none" stroke="#543748" stroke-width="13" stroke-linecap="round" />
-                  <circle cx="388" cy="115" r="2.8" fill="#523c45" />
-                  <circle cx="414" cy="115" r="2.8" fill="#523c45" />
-                  <path d="M391 130 Q401 139 412 129" fill="none" stroke="#a84e69" stroke-width="3" stroke-linecap="round" />
-                  <circle cx="379" cy="126" r="6" fill="#e992a6" opacity=".6" />
-                  <circle cx="422" cy="126" r="6" fill="#e992a6" opacity=".6" />
-                  <path d="M396 69 L403 53 L410 69" fill="#e9b64f" />
-                </g>
-                <g class="delivery-kid">
-                  <path d="M100 149 Q121 133 146 150 L153 194 L94 194Z" fill="#86c7b1" />
-                  <path d="M108 188 L104 214 M139 188 L145 214" stroke="#efc29f" stroke-width="10" stroke-linecap="round" />
-                  <path d="M99 215 L110 215 M141 215 L153 215" stroke="#f5d477" stroke-width="8" stroke-linecap="round" />
-                  <path d="M101 151 Q83 160 72 145 M146 152 Q163 145 176 129" fill="none" stroke="#efc29f" stroke-width="10" stroke-linecap="round" />
-                  <circle cx="124" cy="112" r="34" fill="#efc29f" />
-                  <path d="M91 111 Q88 73 120 72 Q156 74 157 106 L145 99 Q127 101 110 93 L96 109Z" fill="#624331" />
-                  <circle cx="113" cy="114" r="2.6" fill="#523c45" />
-                  <circle cx="136" cy="114" r="2.6" fill="#523c45" />
-                  <path d="M115 127 Q124 135 134 126" fill="none" stroke="#a84e69" stroke-width="2.7" stroke-linecap="round" />
-                  <path d="M169 119 L226 104 L242 137 L184 151Z" fill="#fff2bd" stroke="#d7b76b" stroke-width="2" class="delivered-card" />
-                  <path d="M194 124 L205 134 L222 115" fill="none" stroke="#df8c9f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="card-sparkle" />
-                </g>
-                <path d="M279 87 l5 12 13 1 -10 8 3 12 -11 -7 -11 7 3 -12 -10 -8 13 -1Z" fill="#f2bd58" class="art-star star-a" />
-                <path d="M322 155 l3 7 8 1 -6 5 2 8 -7 -4 -7 4 2 -8 -6 -5 8 -1Z" fill="#8ac8b5" class="art-star star-b" />
-                <circle cx="258" cy="171" r="4" fill="#f5d386" class="art-dot dot-a" />
-                <circle cx="306" cy="73" r="3" fill="#e99aae" class="art-dot dot-b" />
-              </svg>
+          <p>
+            Some loops are worth continuing. Practising a skill, caring for
+            someone, building a meaningful habit or returning to something that
+            brings peace can add value with every repetition.
+          </p>
+
+          <p>
+            When each iteration helps you learn, heal or grow, you may not want
+            to reach the base condition too quickly.
+          </p>
+
+          <p>
+            Still, it is important to know that the base condition exists. Even
+            a beautiful loop should have an exit available. Knowing that you
+            can stop allows you to continue by choice instead of continuing
+            because you feel trapped.
+          </p>
+
+          <div class="comparison">
+            <div class="comparison-card growing">
+              <span class="comparison-emoji">🌱</span>
+              <h3>A growing loop</h3>
+              <p>
+                Each repetition adds knowledge, strength, connection or peace.
+              </p>
+              <span class="loop-result">Continue with awareness</span>
             </div>
 
-            <article class="delivered-wish-card">
-              <span class="wish-card-stamp" aria-hidden="true">✦</span>
-              <p>YOUR OFFICIAL BIRTHDAY REPORT</p>
-              <h3>Unlimited cake. Unlimited stickers.</h3>
-              <span>Wisdom level: still loading…</span>
-            </article>
-            <button class="back-button" type="button" @click="closeGalaxy">Back to the cake</button>
+            <div class="comparison-card draining">
+              <span class="comparison-emoji">🍂</span>
+              <h3>A draining loop</h3>
+              <p>
+                Each repetition reduces your energy, confidence or happiness.
+              </p>
+              <span class="loop-result">Find the base condition</span>
+            </div>
+          </div>
+
+          <h2>Pause before the next call</h2>
+
+          <p>
+            Before repeating the same response, decision or routine again,
+            pause for a moment.
+          </p>
+
+          <ul class="questions">
+            <li>Is this loop still adding value to my life?</li>
+            <li>Am I continuing because I choose to, or because I feel stuck?</li>
+            <li>What is decreasing with every repetition?</li>
+            <li>What condition would allow me to exit peacefully?</li>
+          </ul>
+
+          <p>
+            You do not have to escape every loop. You only need to notice what
+            each iteration is doing to you.
+          </p>
+
+          <p>
+            Continue the recursions that help you grow. For the ones that leave
+            you tired, frustrated and smaller than before, define your base
+            condition and allow yourself to return.
+          </p>
+
+          <div class="final-thought">
+            <span>↻</span>
+            <p>
+              Some patterns deserve another iteration.<br />
+              Others are waiting for you to finally say,
+              <strong>“This is where I stop.”</strong>
+            </p>
           </div>
         </div>
-      </section>
-    </Transition>
+
+        <footer class="article-footer">
+          <span>Thank you for spending a quiet moment here.</span>
+
+          <button @click="closeBlog">
+            Read again from the beginning
+            <span>↑</span>
+          </button>
+        </footer>
+      </article>
+    </section>
   </main>
 </template>
+
+<style>
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Playfair+Display:ital,wght@0,600;1,500&display=swap");
+
+:root {
+  font-family: "DM Sans", sans-serif;
+  color: #433b47;
+  background: #fffaf7;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background:
+    radial-gradient(circle at 10% 10%, #fce8eb 0, transparent 26%),
+    radial-gradient(circle at 90% 30%, #e7f2e5 0, transparent 23%),
+    #fffaf7;
+}
+
+button {
+  font: inherit;
+}
+
+.app {
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+.navbar {
+  position: relative;
+  z-index: 10;
+  width: min(1180px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 28px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand {
+  border: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #554654;
+  background: transparent;
+  font-size: 19px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.brand-icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #d8bdc5;
+  border-radius: 50%;
+  color: #b76e7e;
+  background: rgba(255, 255, 255, 0.62);
+  font-size: 23px;
+}
+
+.nav-note {
+  color: #93858c;
+  font-size: 13px;
+}
+
+/* Home */
+
+.home-page {
+  position: relative;
+}
+
+.hero {
+  max-width: 820px;
+  min-height: 570px;
+  margin: 0 auto;
+  padding: 105px 24px 50px;
+  text-align: center;
+}
+
+.eyebrow {
+  display: inline-flex;
+  padding: 9px 17px;
+  border: 1px solid #ead5da;
+  border-radius: 100px;
+  color: #a15f70;
+  background: rgba(255, 255, 255, 0.58);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1.25px;
+  text-transform: uppercase;
+}
+
+.hero h1,
+.article-header h1 {
+  margin: 28px 0 22px;
+  color: #4f424d;
+  font-family: "Playfair Display", serif;
+  font-size: clamp(48px, 7vw, 78px);
+  font-weight: 600;
+  line-height: 1.06;
+  letter-spacing: -2px;
+}
+
+.hero-description {
+  max-width: 620px;
+  margin: 0 auto;
+  color: #81747b;
+  font-size: 18px;
+  line-height: 1.8;
+}
+
+.scroll-hint {
+  margin-top: 65px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  color: #a28e96;
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.arrow {
+  color: #b76e7e;
+  font-size: 20px;
+  animation: bounce 1.8s infinite;
+}
+
+.floating-shape {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(1px);
+}
+
+.shape-one {
+  top: 90px;
+  left: 7%;
+  width: 110px;
+  height: 110px;
+  border: 1px dashed #e5c5cd;
+  animation: float 7s ease-in-out infinite;
+}
+
+.shape-two {
+  top: 350px;
+  right: 8%;
+  width: 42px;
+  height: 42px;
+  background: #e5f0df;
+  animation: float 5s ease-in-out infinite reverse;
+}
+
+.shape-three {
+  top: 160px;
+  right: 20%;
+  width: 18px;
+  height: 18px;
+  background: #f3d8b9;
+}
+
+.featured-section {
+  width: min(1000px, calc(100% - 40px));
+  margin: 0 auto;
+  padding-bottom: 100px;
+}
+
+.blog-card {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  overflow: hidden;
+  border: 1px solid #eedfe2;
+  border-radius: 32px;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 25px 70px rgba(94, 65, 76, 0.1);
+  cursor: pointer;
+  transition:
+    transform 0.35s ease,
+    box-shadow 0.35s ease;
+}
+
+.blog-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 32px 80px rgba(94, 65, 76, 0.15);
+}
+
+.card-visual {
+  min-height: 430px;
+  padding: 45px;
+  display: grid;
+  place-items: center;
+  background: #f4e5e8;
+}
+
+.loop-art {
+  position: relative;
+  width: 275px;
+  height: 275px;
+}
+
+.loop {
+  position: absolute;
+  inset: 0;
+  border: 2px solid rgba(174, 105, 122, 0.35);
+  border-radius: 43% 57% 48% 52% / 56% 43% 57% 44%;
+}
+
+.loop-one {
+  animation: rotateLoop 14s linear infinite;
+}
+
+.loop-two {
+  inset: 30px;
+  border-color: rgba(174, 105, 122, 0.5);
+  animation: rotateLoop 10s linear infinite reverse;
+}
+
+.loop-three {
+  inset: 60px;
+  border-color: rgba(174, 105, 122, 0.7);
+  animation: rotateLoop 8s linear infinite;
+}
+
+.center-message {
+  position: absolute;
+  inset: 85px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #9c6673;
+  background: rgba(255, 250, 247, 0.85);
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.center-message strong {
+  margin: 2px 0;
+  font-size: 28px;
+}
+
+.card-content {
+  padding: 70px 65px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.post-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: #998b91;
+  font-size: 12px;
+}
+
+.category {
+  padding: 7px 12px;
+  border-radius: 100px;
+  color: #94606d;
+  background: #f6e8eb;
+  font-weight: 600;
+}
+
+.card-content h2 {
+  margin: 25px 0 18px;
+  color: #51444e;
+  font-family: "Playfair Display", serif;
+  font-size: 42px;
+  line-height: 1.12;
+}
+
+.card-content p {
+  margin: 0;
+  color: #7b6e74;
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+.read-button {
+  width: fit-content;
+  margin-top: 32px;
+  padding: 0 0 8px;
+  border: 0;
+  border-bottom: 1px solid #c9919e;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: #995f6d;
+  background: transparent;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.read-button span {
+  transition: transform 0.25s ease;
+}
+
+.read-button:hover span {
+  transform: translateX(6px);
+}
+
+.home-footer {
+  padding: 35px 20px 45px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  color: #a09298;
+  font-size: 12px;
+}
+
+.tiny-flower {
+  color: #bf7c8c;
+}
+
+/* Article */
+
+.article-page {
+  width: min(880px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 55px 0 90px;
+}
+
+.back-button {
+  margin-bottom: 55px;
+  padding: 10px 0;
+  border: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: #96747e;
+  background: transparent;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.back-button span {
+  font-size: 21px;
+  transition: transform 0.25s ease;
+}
+
+.back-button:hover span {
+  transform: translateX(-5px);
+}
+
+.article {
+  overflow: hidden;
+  border: 1px solid #efe1e4;
+  border-radius: 35px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 30px 90px rgba(93, 65, 75, 0.09);
+}
+
+.article-header {
+  padding: 90px 90px 40px;
+  text-align: center;
+}
+
+.article-tag {
+  color: #a66e7b;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.article-header h1 {
+  margin: 23px auto;
+  font-size: clamp(48px, 7vw, 72px);
+}
+
+.article-introduction {
+  max-width: 650px;
+  margin: 0 auto;
+  color: #796c72;
+  font-family: "Playfair Display", serif;
+  font-size: 21px;
+  font-style: italic;
+  line-height: 1.7;
+}
+
+.author-row {
+  margin-top: 35px;
+  display: inline-flex;
+  align-items: center;
+  gap: 13px;
+  text-align: left;
+}
+
+.author-avatar {
+  width: 45px;
+  height: 45px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #9b6572;
+  background: #f5e4e8;
+  font-size: 24px;
+}
+
+.author-row strong,
+.author-row span {
+  display: block;
+}
+
+.author-row strong {
+  color: #574b51;
+  font-size: 13px;
+}
+
+.author-row span {
+  margin-top: 4px;
+  color: #a09298;
+  font-size: 11px;
+}
+
+.article-divider {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  color: #c98797;
+}
+
+.article-divider::before,
+.article-divider::after {
+  height: 1px;
+  flex: 1;
+  background: #f0e4e6;
+  content: "";
+}
+
+.article-content {
+  padding: 45px 100px 80px;
+  color: #5f5359;
+}
+
+.article-content p {
+  margin: 0 0 25px;
+  font-size: 17px;
+  line-height: 1.95;
+}
+
+.article-content .opening-paragraph::first-letter {
+  padding-right: 7px;
+  float: left;
+  color: #a76273;
+  font-family: "Playfair Display", serif;
+  font-size: 62px;
+  line-height: 0.9;
+}
+
+.article-content h2 {
+  margin: 55px 0 20px;
+  color: #53454d;
+  font-family: "Playfair Display", serif;
+  font-size: 32px;
+}
+
+blockquote {
+  position: relative;
+  margin: 50px 0;
+  padding: 38px 45px;
+  border: 0;
+  border-radius: 22px;
+  color: #765964;
+  background: #f8eaed;
+  font-family: "Playfair Display", serif;
+  font-size: 24px;
+  font-style: italic;
+  line-height: 1.65;
+  text-align: center;
+}
+
+.reflection-box {
+  margin: 45px 0;
+  padding: 28px 30px;
+  border: 1px solid #dce8d8;
+  border-radius: 20px;
+  display: flex;
+  gap: 20px;
+  background: #f1f6ee;
+}
+
+.reflection-icon {
+  font-size: 32px;
+}
+
+.reflection-box h3 {
+  margin: 0 0 8px;
+  color: #5d7257;
+  font-family: "Playfair Display", serif;
+  font-size: 21px;
+}
+
+.reflection-box p {
+  margin: 0;
+  color: #6f7c6b;
+  font-size: 15px;
+}
+
+.comparison {
+  margin: 45px 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.comparison-card {
+  padding: 32px 26px;
+  border-radius: 22px;
+}
+
+.comparison-card.growing {
+  border: 1px solid #dce8d7;
+  background: #f0f5ed;
+}
+
+.comparison-card.draining {
+  border: 1px solid #efdfd3;
+  background: #fbf1e9;
+}
+
+.comparison-emoji {
+  font-size: 30px;
+}
+
+.comparison-card h3 {
+  margin: 15px 0 10px;
+  color: #55494f;
+  font-family: "Playfair Display", serif;
+  font-size: 21px;
+}
+
+.comparison-card p {
+  margin: 0 0 20px;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.loop-result {
+  color: #92717a;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+}
+
+.questions {
+  margin: 30px 0 35px;
+  padding: 0;
+  list-style: none;
+}
+
+.questions li {
+  position: relative;
+  margin-bottom: 13px;
+  padding: 17px 20px 17px 48px;
+  border: 1px solid #eee2e4;
+  border-radius: 14px;
+  color: #665960;
+  background: #fffaf9;
+  line-height: 1.6;
+}
+
+.questions li::before {
+  position: absolute;
+  top: 17px;
+  left: 20px;
+  color: #bd7889;
+  content: "↻";
+}
+
+.final-thought {
+  margin-top: 60px;
+  padding: 46px;
+  border-radius: 25px;
+  color: #694d57;
+  background: #f3dfe4;
+  text-align: center;
+}
+
+.final-thought > span {
+  display: block;
+  margin-bottom: 15px;
+  font-size: 40px;
+}
+
+.final-thought p {
+  margin: 0;
+  font-family: "Playfair Display", serif;
+  font-size: 23px;
+  line-height: 1.7;
+}
+
+.article-footer {
+  padding: 30px 45px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #a19097;
+  background: #fff8f6;
+  font-size: 12px;
+}
+
+.article-footer button {
+  padding: 10px 0;
+  border: 0;
+  display: flex;
+  gap: 10px;
+  color: #9a6170;
+  background: transparent;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+@keyframes rotateLoop {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0);
+  }
+
+  50% {
+    transform: translateY(-18px) rotate(12deg);
+  }
+}
+
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(6px);
+  }
+}
+
+@media (max-width: 780px) {
+  .nav-note,
+  .floating-shape {
+    display: none;
+  }
+
+  .hero {
+    min-height: 510px;
+    padding-top: 80px;
+  }
+
+  .hero h1 {
+    font-size: 48px;
+  }
+
+  .blog-card {
+    grid-template-columns: 1fr;
+  }
+
+  .card-visual {
+    min-height: 320px;
+  }
+
+  .loop-art {
+    width: 225px;
+    height: 225px;
+  }
+
+  .center-message {
+    inset: 70px;
+  }
+
+  .card-content {
+    padding: 45px 35px;
+  }
+
+  .card-content h2 {
+    font-size: 36px;
+  }
+
+  .article-page {
+    padding-top: 30px;
+  }
+
+  .article-header {
+    padding: 60px 30px 35px;
+  }
+
+  .article-content {
+    padding: 35px 30px 60px;
+  }
+
+  .comparison {
+    grid-template-columns: 1fr;
+  }
+
+  blockquote {
+    padding: 30px 25px;
+    font-size: 21px;
+  }
+
+  .article-footer {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar {
+    width: calc(100% - 28px);
+  }
+
+  .hero {
+    padding-right: 18px;
+    padding-left: 18px;
+  }
+
+  .hero h1 {
+    font-size: 41px;
+    letter-spacing: -1px;
+  }
+
+  .hero-description {
+    font-size: 16px;
+  }
+
+  .featured-section,
+  .article-page {
+    width: calc(100% - 24px);
+  }
+
+  .blog-card,
+  .article {
+    border-radius: 24px;
+  }
+
+  .card-content {
+    padding: 38px 25px;
+  }
+
+  .card-content h2 {
+    font-size: 32px;
+  }
+
+  .article-header h1 {
+    font-size: 43px;
+    letter-spacing: -1px;
+  }
+
+  .article-introduction {
+    font-size: 18px;
+  }
+
+  .article-content {
+    padding-right: 22px;
+    padding-left: 22px;
+  }
+
+  .article-content p {
+    font-size: 16px;
+  }
+
+  .article-content h2 {
+    font-size: 29px;
+  }
+
+  .reflection-box {
+    flex-direction: column;
+  }
+
+  .final-thought {
+    padding: 35px 24px;
+  }
+
+  .final-thought p {
+    font-size: 20px;
+  }
+
+  .home-footer {
+    flex-wrap: wrap;
+  }
+}
+</style>
