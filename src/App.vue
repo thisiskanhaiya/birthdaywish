@@ -2,535 +2,453 @@
 import { computed, ref } from "vue";
 import Recursion from "./blogs/Recursion.vue";
 
+import homeGirl from "./assets/home-girl.png";
+import recursionCard from "./assets/recursion-card.png";
+
 const activeBlog = ref(null);
 const activeCategory = ref("All");
+const mobileMenuOpen = ref(false);
+
+const categories = [
+  { name: "All", icon: "✦" },
+  { name: "Life", icon: "☕" },
+  { name: "Tech", icon: "⌨" },
+  { name: "Growth", icon: "🌱" },
+  { name: "Mindset", icon: "♡" },
+];
 
 const blogs = [
   {
     id: "recursion",
     title: "Finding the Base Condition",
-    hook: "Sometimes you just need to return.",
+    description: "Sometimes you just need to return.",
     category: "Life",
     readTime: "3 min",
-    color: "lilac",
-    sticker: "↻",
+    image: recursionCard,
     component: Recursion,
   },
 ];
 
-// Add future blogs here only.
-const comingSoon = [
+const upcomingBlogs = [
   {
     id: "waiting",
     title: "Not Everything Deserves Infinite Waiting",
-    hook: "Some responses are timeouts for a reason.",
+    description: "Some responses are timeouts for a reason.",
     category: "Mindset",
     readTime: "3 min",
-    color: "peach",
-    sticker: "⌛",
+    artwork: "waiting",
   },
   {
     id: "happy-path",
     title: "Life Doesn't Always Follow the Happy Path",
-    hook: "Errors are part of the process.",
+    description: "Errors are part of the process.",
     category: "Growth",
     readTime: "4 min",
-    color: "mint",
-    sticker: "✦",
+    artwork: "error",
   },
   {
     id: "commit",
     title: "Commit the Change",
-    hook: "A new version of you is always possible.",
+    description: "A new version of you is always possible.",
     category: "Life",
     readTime: "3 min",
-    color: "sky",
-    sticker: "✓",
+    artwork: "commit",
   },
 ];
 
-const categories = ["All", "Life", "Tech", "Growth", "Mindset"];
-
 const filteredBlogs = computed(() => {
-  if (activeCategory.value === "All") return blogs;
+  if (activeCategory.value === "All") {
+    return blogs;
+  }
 
   return blogs.filter(
     (blog) => blog.category === activeCategory.value
   );
 });
 
-function selectBlog(blog) {
+function openBlog(blog) {
   activeBlog.value = blog;
-  window.scrollTo({ top: 0 });
+  mobileMenuOpen.value = false;
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth",
+  });
 }
 
 function goHome() {
   activeBlog.value = null;
-  window.scrollTo({ top: 0 });
+  mobileMenuOpen.value = false;
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth",
+  });
 }
 
 function scrollToExplore() {
-  document
-    .querySelector("#explore")
-    ?.scrollIntoView({ behavior: "smooth" });
+  mobileMenuOpen.value = false;
+
+  document.querySelector("#explore")?.scrollIntoView({
+    behavior: "smooth",
+  });
+}
+
+function chooseCategory(category) {
+  activeCategory.value = category;
+  scrollToExplore();
 }
 </script>
 
 <template>
-  <div class="site">
-
-    <!-- =========================
-         TOP NAV
-    ========================== -->
-
-    <header class="top-nav">
-      <button class="logo" @click="goHome">
-        little.log <span>♡</span>
-      </button>
-
-      <div class="nav-actions">
-        <button
-          v-if="!activeBlog"
-          class="round-button"
-          @click="scrollToExplore"
-          aria-label="Explore"
-        >
-          ⌕
+  <div class="app-shell">
+    <!-- TOP NAVIGATION -->
+    <header class="top-navigation">
+      <div class="navigation-inner">
+        <button class="site-logo" type="button" @click="goHome">
+          little.log <span>♡</span>
         </button>
 
-        <button
-          v-if="!activeBlog"
-          class="round-button"
-          aria-label="Menu"
-        >
-          ☰
-        </button>
+        <div v-if="!activeBlog" class="navigation-actions">
+          <button
+            class="navigation-icon"
+            type="button"
+            aria-label="Explore blogs"
+            @click="scrollToExplore"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <circle cx="11" cy="11" r="6"></circle>
+              <path d="m16 16 4 4"></path>
+            </svg>
+          </button>
+
+          <button
+            class="navigation-icon menu-button"
+            type="button"
+            aria-label="Open menu"
+            @click="mobileMenuOpen = !mobileMenuOpen"
+          >
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+        </div>
       </div>
+
+      <Transition name="menu">
+        <div v-if="mobileMenuOpen" class="navigation-menu">
+          <button type="button" @click="goHome">
+            Home
+          </button>
+
+          <button type="button" @click="scrollToExplore">
+            Explore thoughts
+          </button>
+
+          <button type="button">
+            Saved thoughts
+          </button>
+        </div>
+      </Transition>
     </header>
 
-
-    <!-- =========================
-         HOME
-    ========================== -->
-
-    <main v-if="!activeBlog">
-
+    <!-- HOME PAGE -->
+    <main v-if="!activeBlog" class="home-page">
       <!-- HERO -->
-
-      <section class="cute-hero">
-
-        <span class="doodle doodle-star">✦</span>
-        <span class="doodle doodle-heart">♡</span>
-        <span class="doodle doodle-flower">✿</span>
-
+      <section class="home-hero">
         <div class="hero-copy">
-
-          <div class="tiny-label">
+          <span class="eyebrow">
             TECH THOUGHTS · REAL FEELINGS
-          </div>
+          </span>
 
           <h1>
-            Same scroll.<br />
+            Same scroll.
             <span>New perspective.</span>
           </h1>
 
           <p>
-            Small relatable reads for builders,
-            overthinkers, dreamers and people who
-            occasionally find life inside code.
+            Small relatable reads for builders, overthinkers,
+            dreamers and people who occasionally find life
+            inside code.
           </p>
 
           <button
-            class="explore-button"
+            class="dark-button"
+            type="button"
             @click="scrollToExplore"
           >
             Explore blogs
             <span>→</span>
           </button>
-
         </div>
 
+        <div class="hero-image-area">
+          <span class="hero-pastel-circle circle-one"></span>
+          <span class="hero-pastel-circle circle-two"></span>
 
-        <!-- CHARACTER / STICKER ART -->
+          <img
+            class="home-girl-image"
+            :src="homeGirl"
+            alt="Little.log reader behind a laptop"
+          />
 
-        <div class="hero-art">
-
-          <div class="sun-blob"></div>
-
-          <div class="laptop-sticker">
-
-            <div class="person-head">
-              <div class="hair hair-left"></div>
-              <div class="hair hair-right"></div>
-
-              <div class="face">
-                <span class="eye">•</span>
-                <span class="eye">•</span>
-                <span class="smile">⌣</span>
-              </div>
-
-              <div class="bun"></div>
-            </div>
-
-            <div class="person-body">
-              <div class="sleeve left-sleeve"></div>
-              <div class="sleeve right-sleeve"></div>
-            </div>
-
-            <div class="laptop">
-              <span class="laptop-heart">♡</span>
-
-              <div class="laptop-text">
-                good ideas<br />
-                better days
-              </div>
-
-              <span class="tiny-flower">✿</span>
-            </div>
-
-          </div>
-
-
-          <div class="sticky-note">
-            <span>♡</span>
+          <div class="yellow-sticky-note">
+            <span class="sticky-heart">♡</span>
 
             It's not<br />
-            just code.<br />
+            just code,<br />
             <strong>it's life too.</strong>
           </div>
 
+          <span class="hero-doodle doodle-one">⌁</span>
+          <span class="hero-doodle doodle-two">✦</span>
         </div>
-
       </section>
 
-
-      <!-- CATEGORY BUBBLES -->
-
-      <section class="category-bubbles">
-
+      <!-- CATEGORY ICONS -->
+      <section class="category-icons">
         <button
           v-for="category in categories.slice(1)"
-          :key="category"
-          class="bubble-item"
-          @click="
-            activeCategory = category;
-            scrollToExplore();
-          "
+          :key="category.name"
+          class="category-icon-button"
+          type="button"
+          @click="chooseCategory(category.name)"
         >
           <span
-            class="bubble-icon"
-            :class="`bubble-${category.toLowerCase()}`"
+            class="category-icon-circle"
+            :class="`category-${category.name.toLowerCase()}`"
           >
-            {{
-              category === "Life"
-                ? "☕"
-                : category === "Tech"
-                ? "⌨"
-                : category === "Growth"
-                ? "☘"
-                : "♡"
-            }}
+            {{ category.icon }}
           </span>
 
-          {{ category }}
+          <span>{{ category.name }}</span>
         </button>
-
       </section>
 
-
-      <!-- TODAY PICK -->
-
+      <!-- TODAY'S PICK -->
       <section class="today-section">
-
-        <div class="section-title-row">
-
+        <div class="section-heading">
           <div>
-            <span class="section-mini">START HERE</span>
+            <span class="section-label">START HERE</span>
 
             <h2>
-              Today's Pick
-              <span>✦</span>
+              Today’s Pick
+              <span class="sparkle">✦</span>
             </h2>
           </div>
 
-          <span class="scribble">
-            short & sweet
+          <span class="handwritten-note">
+            short &amp; sweet
           </span>
-
         </div>
 
-
         <article
-          class="today-card"
-          @click="selectBlog(blogs[0])"
+          class="featured-card"
+          tabindex="0"
+          @click="openBlog(blogs[0])"
+          @keydown.enter="openBlog(blogs[0])"
         >
-
-          <!-- ART -->
-
-          <div class="today-art">
-
-            <span class="cloud cloud-one">☁</span>
-            <span class="cloud cloud-two">☁</span>
-
-            <div class="sun"></div>
-
-            <div class="mountain mountain-back"></div>
-            <div class="mountain mountain-front"></div>
-
-            <div class="road"></div>
-
-            <div class="sign-post">
-              <div>continue →</div>
-              <div>← return</div>
-              <span></span>
-            </div>
-
+          <div class="featured-image">
+            <img
+              :src="recursionCard"
+              alt="A road with continue and return signs"
+            />
           </div>
 
+          <div class="featured-copy">
+            <span class="pink-pill">Life × Tech</span>
 
-          <div class="today-content">
-
-            <span class="blog-tag">
-              Life × Tech
-            </span>
-
-            <h3>
-              Finding the<br />
-              Base Condition
-            </h3>
+            <h3>Finding the Base Condition</h3>
 
             <p>
               Sometimes you just need to return.
             </p>
 
-            <div class="today-footer">
-
+            <div class="featured-footer">
               <span>3 min read</span>
 
               <button
-                @click.stop="selectBlog(blogs[0])"
+                type="button"
+                @click.stop="openBlog(blogs[0])"
               >
-                Read →
+                Read
+                <span>→</span>
               </button>
-
             </div>
-
           </div>
-
         </article>
-
       </section>
 
+      <!-- DAILY REMINDER -->
+      <section class="daily-reminder">
+        <span class="reminder-tape"></span>
 
-      <!-- DAILY NOTE -->
-
-      <section class="daily-note">
-
-        <span class="tape"></span>
-
-        <small>daily reminder</small>
+        <span class="reminder-label">
+          DAILY REMINDER
+        </span>
 
         <p>
-          “Not every loop is a trap.
-          <strong>Some loops are how you grow.</strong>”
+          “Not every loop is a trap.<br />
+          Some loops are how you grow.”
         </p>
 
-        <span class="note-heart">♡</span>
-
+        <span class="reminder-heart">♡</span>
       </section>
 
-
       <!-- EXPLORE -->
-
-      <section
-        id="explore"
-        class="explore-section"
-      >
-
-        <div class="explore-heading">
-
+      <section id="explore" class="explore-section">
+        <div class="explore-title">
           <div>
-            <span class="section-mini">
+            <span class="section-label">
               LITTLE THOUGHTS
             </span>
 
-            <h2>
-              Explore ♡
-            </h2>
+            <h2>More Thoughts for You</h2>
           </div>
 
-          <p>
-            same tech.<br />
-            different lens.
-          </p>
-
+          <span class="see-all">see all →</span>
         </div>
 
-
-        <!-- FILTERS -->
-
-        <div class="filter-row">
-
+        <div class="category-filter">
           <button
             v-for="category in categories"
-            :key="category"
-            :class="[
-              'filter-pill',
-              {
-                active:
-                  activeCategory === category,
-              },
-            ]"
-            @click="activeCategory = category"
+            :key="category.name"
+            type="button"
+            :class="{ active: activeCategory === category.name }"
+            @click="activeCategory = category.name"
           >
-            {{ category }}
+            {{ category.name }}
           </button>
-
         </div>
 
-
-        <!-- BLOG FEED -->
-
-        <div class="blog-feed">
-
+        <div class="thoughts-row">
           <article
             v-for="blog in filteredBlogs"
             :key="blog.id"
-            class="feed-card"
-            @click="selectBlog(blog)"
+            class="thought-card available"
+            @click="openBlog(blog)"
           >
+            <div class="thought-image">
+              <img :src="blog.image" :alt="blog.title" />
 
-            <div
-              class="feed-art"
-              :class="blog.color"
-            >
-              <span class="feed-sticker">
-                {{ blog.sticker }}
+              <span class="status-pill">
+                Read now
               </span>
-
-              <div class="mini-landscape">
-                <div class="mini-sun"></div>
-                <div class="mini-hill one"></div>
-                <div class="mini-hill two"></div>
-              </div>
             </div>
 
+            <div class="thought-copy">
+              <span>{{ blog.category }}</span>
 
-            <div class="feed-content">
+              <h3>{{ blog.title }}</h3>
 
-              <span class="feed-category">
-                {{ blog.category }}
-              </span>
+              <p>{{ blog.description }}</p>
 
-              <h3>
-                {{ blog.title }}
-              </h3>
-
-              <p>
-                {{ blog.hook }}
-              </p>
-
-              <div class="feed-footer">
-                <span>
-                  {{ blog.readTime }} read
-                </span>
-
-                <span class="bookmark">
-                  ♡
-                </span>
-              </div>
-
+              <footer>
+                <small>{{ blog.readTime }} read</small>
+                <span>♡</span>
+              </footer>
             </div>
-
           </article>
-
-
-          <!-- COMING SOON -->
 
           <article
-            v-for="blog in comingSoon"
+            v-for="blog in upcomingBlogs"
             :key="blog.id"
-            class="feed-card coming-card"
+            class="thought-card coming-soon"
           >
-
             <div
-              class="feed-art"
-              :class="blog.color"
+              class="thought-placeholder"
+              :class="`placeholder-${blog.artwork}`"
             >
-              <span class="feed-sticker">
-                {{ blog.sticker }}
-              </span>
-
-              <div class="coming-label">
-                brewing ♡
-              </div>
-            </div>
-
-
-            <div class="feed-content">
-
-              <span class="feed-category">
-                {{ blog.category }}
-              </span>
-
-              <h3>
-                {{ blog.title }}
-              </h3>
-
-              <p>
-                {{ blog.hook }}
-              </p>
-
-              <div class="feed-footer">
-                <span>coming soon</span>
-                <span>✦</span>
+              <div
+                v-if="blog.artwork === 'waiting'"
+                class="hourglass-illustration"
+              >
+                <span class="hourglass-top"></span>
+                <span class="hourglass-center"></span>
+                <span class="hourglass-bottom"></span>
               </div>
 
+              <div
+                v-if="blog.artwork === 'error'"
+                class="error-sign"
+              >
+                ERROR<br />
+                ≠<br />
+                END
+              </div>
+
+              <div
+                v-if="blog.artwork === 'commit'"
+                class="commit-art"
+              >
+                <span class="commit-head"></span>
+                <span class="commit-body"></span>
+                <span class="commit-bag"></span>
+              </div>
+
+              <span class="status-pill">
+                Coming soon
+              </span>
             </div>
 
+            <div class="thought-copy">
+              <span>{{ blog.category }}</span>
+
+              <h3>{{ blog.title }}</h3>
+
+              <p>{{ blog.description }}</p>
+
+              <footer>
+                <small>{{ blog.readTime }} read</small>
+                <span>♡</span>
+              </footer>
+            </div>
           </article>
-
         </div>
 
+        <p class="swipe-hint">
+          Swipe to discover more
+          <span>→</span>
+        </p>
       </section>
 
+      <!-- MOBILE BOTTOM NAVIGATION -->
+      <nav class="bottom-navigation">
+        <button class="active" type="button" @click="goHome">
+          <span>⌂</span>
+          Home
+        </button>
 
-      <!-- END STICKERS -->
+        <button type="button" @click="scrollToExplore">
+          <span>⌕</span>
+          Explore
+        </button>
 
-      <section class="closing-area">
+        <button class="create-button" type="button">
+          <span>＋</span>
+        </button>
 
-        <div class="pink-note">
-          Good blogs.<br />
-          brighter days.
+        <button type="button">
+          <span>♡</span>
+          Saved
+        </button>
+
+        <button type="button">
           <span>☺</span>
-        </div>
-
-        <div class="yellow-note">
-          stay a little<br />
-          longer ♡
-        </div>
-
-        <span class="closing-flower">
-          ❀
-        </span>
-
-      </section>
-
+          Profile
+        </button>
+      </nav>
     </main>
 
-
-    <!-- =========================
-         BLOG
-    ========================== -->
-
+    <!-- SELECTED BLOG -->
     <main v-else>
-
       <component
         :is="activeBlog.component"
         @back="goHome"
       />
-
     </main>
-
   </div>
 </template>
