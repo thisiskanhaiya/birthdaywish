@@ -245,7 +245,7 @@ defineEmits(["back"]);
 
 
         <p>
-          At the end of the month, I looked back and realised
+          At the end of the year now, I looked back and realised
           I had started many things, but hadn’t given enough
           attention to any of them.
         </p>
