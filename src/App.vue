@@ -3,6 +3,7 @@ import { computed, ref } from "vue";
 
 import Focus from "./blogs/Focus.vue";
 import Recursion from "./blogs/Recursion.vue";
+import Pause from "./blogs/Pause.vue";  
 
 const activeBlog = ref(null);
 const category = ref("All");
@@ -21,6 +22,18 @@ const category = ref("All");
 */
 
 const blogs = [
+   {
+    id: "pause",
+    title: "The Quiet Advantage of Not Rushing Everything",
+    shortTitle: "The Quiet Advantage of Not Rushing",
+    description:
+      "Some of the best decisions happen in the pause before you reply.",
+    category: "Life",
+    readTime: "3 min",
+    component: Pause,
+    art: "pause",
+    date: "16 Nov 2026",
+  },
   {
     id: "focus",
     title: "Don’t Rush. Focus on One Thing at a Time.",
