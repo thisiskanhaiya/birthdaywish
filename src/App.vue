@@ -1,63 +1,151 @@
 <script setup>
 import { computed, ref } from "vue";
+
+import Focus from "./blogs/Focus.vue";
 import Recursion from "./blogs/Recursion.vue";
 
 const activeBlog = ref(null);
 const category = ref("All");
 
+/*
+|--------------------------------------------------------------------------
+| BLOG REGISTRY
+|--------------------------------------------------------------------------
+|
+| IMPORTANT:
+| Always add the NEWEST blog at the TOP.
+|
+| First blog = Today's Pick automatically.
+| Remaining blogs = Explore/category library automatically.
+|
+*/
+
 const blogs = [
+  {
+    id: "focus",
+    title: "Don’t Rush. Focus on One Thing at a Time.",
+    shortTitle: "Don’t Rush. Focus.",
+    description: "Being busy doesn’t always mean being productive.",
+    category: "Growth",
+    readTime: "3 min",
+    component: Focus,
+    art: "focus",
+    date: "15 Nov 2026",
+  },
+
   {
     id: "recursion",
     title: "Finding the Base Condition",
+    shortTitle: "Finding the Base Condition",
     description: "Sometimes you just need to return.",
     category: "Life",
     readTime: "3 min",
     component: Recursion,
+    art: "recursion",
+    date: "14 Nov 2026",
   },
 ];
 
-const upcoming = [
+const categories = [
   {
-    id: "waiting",
-    title: "Not Everything Deserves Infinite Waiting",
-    description: "Some responses are timeouts for a reason.",
-    category: "Mindset",
-    readTime: "3 min",
-    art: "hourglass",
+    name: "All",
+    icon: "✦",
   },
   {
-    id: "happy",
-    title: "Life Doesn't Always Follow the Happy Path",
-    description: "Errors are part of the process.",
-    category: "Growth",
-    readTime: "4 min",
-    art: "error",
+    name: "Life",
+    icon: "☕",
   },
   {
-    id: "commit",
-    title: "Commit the Change",
-    description: "A new version of you is always possible.",
-    category: "Life",
-    readTime: "3 min",
-    art: "commit",
+    name: "Tech",
+    icon: "⌨",
+  },
+  {
+    name: "Growth",
+    icon: "🌱",
+  },
+  {
+    name: "Mindset",
+    icon: "♡",
   },
 ];
 
-const categories = ["All", "Life", "Tech", "Growth", "Mindset"];
+/*
+|--------------------------------------------------------------------------
+| AUTOMATIC TODAY'S PICK
+|--------------------------------------------------------------------------
+*/
+
+const featuredBlog = computed(() => blogs[0]);
+
+/*
+|--------------------------------------------------------------------------
+| AUTOMATIC EXPLORE LIBRARY
+|--------------------------------------------------------------------------
+|
+| Today's Pick is removed from Explore.
+| Once a newer blog is added, the current featured blog automatically
+| comes back into Explore.
+|
+*/
+
+const archiveBlogs = computed(() => {
+  return blogs.slice(1);
+});
+
+/*
+|--------------------------------------------------------------------------
+| CATEGORY FILTERING
+|--------------------------------------------------------------------------
+*/
 
 const filteredBlogs = computed(() => {
-  if (category.value === "All") return blogs;
-  return blogs.filter((blog) => blog.category === category.value);
+  if (category.value === "All") {
+    return archiveBlogs.value;
+  }
+
+  return archiveBlogs.value.filter(
+    (blog) => blog.category === category.value
+  );
 });
+
+/*
+|--------------------------------------------------------------------------
+| CATEGORY COUNTS
+|--------------------------------------------------------------------------
+*/
+
+const categoryCount = (categoryName) => {
+  if (categoryName === "All") {
+    return archiveBlogs.value.length;
+  }
+
+  return archiveBlogs.value.filter(
+    (blog) => blog.category === categoryName
+  ).length;
+};
+
+/*
+|--------------------------------------------------------------------------
+| NAVIGATION
+|--------------------------------------------------------------------------
+*/
 
 function openBlog(blog) {
   activeBlog.value = blog;
-  window.scrollTo({ top: 0, behavior: "smooth" });
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth",
+  });
 }
 
 function goHome() {
   activeBlog.value = null;
-  window.scrollTo({ top: 0, behavior: "smooth" });
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth",
+  });
 }
 
 function explore() {
@@ -65,30 +153,62 @@ function explore() {
     behavior: "smooth",
   });
 }
+
+function selectCategory(item) {
+  category.value = item;
+  explore();
+}
 </script>
 
 <template>
   <div class="little-app">
 
-    <!-- LANDING -->
+    <!-- ======================================================
+         HOME
+    ======================================================= -->
+
     <template v-if="!activeBlog">
 
+      <!-- NAV -->
+
       <header class="topbar">
-        <button class="logo" @click="goHome">
-          little.log <span>♡</span>
+
+        <button
+          class="logo"
+          type="button"
+          @click="goHome"
+        >
+          little.log
+          <span>♡</span>
         </button>
 
+
         <div class="top-actions">
-          <button @click="explore">⌕</button>
-          <button>☰</button>
+
+          <button
+            type="button"
+            aria-label="Explore"
+            @click="explore"
+          >
+            ⌕
+          </button>
+
+          <button
+            type="button"
+            aria-label="Menu"
+          >
+            ☰
+          </button>
+
         </div>
+
       </header>
 
 
       <main>
 
         <!-- ==================================================
-             COMPACT HERO
+             HERO
         =================================================== -->
 
         <section class="hero">
@@ -101,7 +221,10 @@ function explore() {
 
             <h1>
               Same scroll.
-              <em>New perspective.</em>
+
+              <em>
+                New perspective.
+              </em>
             </h1>
 
             <p>
@@ -110,7 +233,10 @@ function explore() {
               occasionally find life inside code.
             </p>
 
-            <button class="primary-btn" @click="explore">
+            <button
+              class="primary-btn"
+              @click="explore"
+            >
               Explore blogs
               <span>→</span>
             </button>
@@ -118,43 +244,58 @@ function explore() {
           </div>
 
 
-          <!-- CODE-ONLY CUTE STICKER -->
+          <!-- CSS STICKER -->
 
           <div class="desk-sticker">
 
             <div class="pastel-blob"></div>
 
-            <span class="spark spark-a">✦</span>
-            <span class="spark spark-b">♡</span>
+            <span class="spark spark-a">
+              ✦
+            </span>
 
-            <!-- sticky note -->
+            <span class="spark spark-b">
+              ♡
+            </span>
+
+
+            <!-- NOTE -->
 
             <div class="hero-note">
+
               <span>♡</span>
 
               It's not<br />
               just code,<br />
-              <strong>it's life too.</strong>
+
+              <strong>
+                it's life too.
+              </strong>
+
             </div>
 
 
-            <!-- plant -->
+            <!-- PLANT -->
 
             <div class="plant">
+
               <div class="leaf leaf-left"></div>
               <div class="leaf leaf-right"></div>
+
               <div class="stem"></div>
               <div class="pot"></div>
+
             </div>
 
 
-            <!-- CHARACTER STICKER -->
+            <!-- CHARACTER -->
 
             <div class="character">
 
               <div class="hair-back"></div>
 
               <div class="head">
+
                 <div class="fringe fringe-left"></div>
                 <div class="fringe fringe-right"></div>
 
@@ -165,6 +306,7 @@ function explore() {
                 <span class="blush blush-right"></span>
 
                 <span class="character-mouth"></span>
+
               </div>
 
               <div class="bun"></div>
@@ -177,21 +319,26 @@ function explore() {
             </div>
 
 
-            <!-- laptop -->
+            <!-- LAPTOP -->
 
             <div class="cute-laptop">
-              <span class="laptop-heart">♡</span>
+              <span class="laptop-heart">
+                ♡
+              </span>
             </div>
 
 
             <!-- CAT -->
 
             <div class="cat">
+
               <span class="cat-ear ear-one"></span>
               <span class="cat-ear ear-two"></span>
+
               <span class="cat-head"></span>
               <span class="cat-body"></span>
               <span class="cat-tail"></span>
+
             </div>
 
           </div>
@@ -200,36 +347,34 @@ function explore() {
 
 
         <!-- ==================================================
-             CATEGORIES
+             QUICK CATEGORIES
         =================================================== -->
 
         <section class="quick-categories">
 
-          <button @click="category = 'Life'; explore()">
-            <span class="circle peach">☕</span>
-            Life
-          </button>
+          <button
+            v-for="item in categories.slice(1)"
+            :key="item.name"
+            type="button"
+            @click="selectCategory(item.name)"
+          >
 
-          <button @click="category = 'Tech'; explore()">
-            <span class="circle blue">⌨</span>
-            Tech
-          </button>
+            <span
+              class="circle"
+              :class="item.name.toLowerCase()"
+            >
+              {{ item.icon }}
+            </span>
 
-          <button @click="category = 'Growth'; explore()">
-            <span class="circle green">🌱</span>
-            Growth
-          </button>
+            {{ item.name }}
 
-          <button @click="category = 'Mindset'; explore()">
-            <span class="circle pink">♡</span>
-            Mindset
           </button>
 
         </section>
 
 
         <!-- ==================================================
-             TODAY
+             TODAY'S PICK
         =================================================== -->
 
         <section class="today">
@@ -237,17 +382,21 @@ function explore() {
           <div class="section-head">
 
             <div>
-              <span>START HERE</span>
+
+              <span>
+                TODAY'S PICK
+              </span>
 
               <h2>
-                Today's Pick
+                A little thought
                 <b>✦</b>
               </h2>
+
             </div>
 
+
             <small>
-              short &amp; sweet
-              ↘
+              newest thought ↘
             </small>
 
           </div>
@@ -255,71 +404,143 @@ function explore() {
 
           <article
             class="featured"
-            @click="openBlog(blogs[0])"
+            @click="openBlog(featuredBlog)"
           >
 
-            <!-- CSS LANDSCAPE -->
+            <!-- Dynamic artwork -->
 
-            <div class="landscape">
+            <div
+              class="featured-dynamic-art"
+              :class="`featured-${featuredBlog.art}`"
+            >
 
-              <div class="sky-sun"></div>
+              <!-- FOCUS -->
 
-              <div class="sky-cloud cloud-left">
-                <i></i><i></i><i></i>
-              </div>
+              <template v-if="featuredBlog.art === 'focus'">
 
-              <div class="sky-cloud cloud-right">
-                <i></i><i></i><i></i>
-              </div>
-
-              <div class="mountain back-one"></div>
-              <div class="mountain back-two"></div>
-
-              <div class="hill hill-one"></div>
-              <div class="hill hill-two"></div>
-
-              <div class="path"></div>
-
-              <div class="sign">
-                <span class="sign-top">
-                  continue →
+                <span class="featured-focus-spark focus-art-one">
+                  ✦
                 </span>
 
-                <span class="sign-bottom">
-                  ← return
+                <span class="featured-focus-spark focus-art-two">
+                  ♡
                 </span>
 
-                <i></i>
-              </div>
 
-              <span class="land-flower flower-a">✿</span>
-              <span class="land-flower flower-b">✿</span>
+                <div class="focus-board">
+
+                  <span class="board-tape"></span>
+
+                  <small>
+                    THIS WEEK
+                  </small>
+
+                  <div class="board-task completed">
+                    <span>✓</span>
+                    Learn
+                  </div>
+
+                  <div class="board-task active">
+                    <span>02</span>
+                    Practise
+                  </div>
+
+                  <div class="board-task">
+                    <span>03</span>
+                    Improve
+                  </div>
+
+                </div>
+
+
+                <div class="focus-timer">
+
+                  <div class="timer-ring">
+
+                    <span>45</span>
+
+                    <small>
+                      MIN
+                    </small>
+
+                  </div>
+
+                </div>
+
+
+                <div class="featured-focus-note">
+                  one thing<br />
+                  at a time ♡
+                </div>
+
+              </template>
+
+
+              <!-- RECURSION -->
+
+              <template v-if="featuredBlog.art === 'recursion'">
+
+                <div class="sky-sun"></div>
+
+                <div class="mountain back-one"></div>
+                <div class="mountain back-two"></div>
+
+                <div class="hill hill-one"></div>
+                <div class="hill hill-two"></div>
+
+                <div class="path"></div>
+
+                <div class="sign">
+
+                  <span class="sign-top">
+                    continue →
+                  </span>
+
+                  <span class="sign-bottom">
+                    ← return
+                  </span>
+
+                  <i></i>
+
+                </div>
+
+              </template>
 
             </div>
 
 
+            <!-- COPY -->
+
             <div class="featured-copy">
 
-              <span class="tag">
-                Life × Tech
+              <span
+                class="tag"
+                :class="`tag-${featuredBlog.category.toLowerCase()}`"
+              >
+                {{ featuredBlog.category }}
               </span>
 
+
               <h3>
-                Finding the<br />
-                Base Condition
+                {{ featuredBlog.shortTitle }}
               </h3>
 
+
               <p>
-                Sometimes you just need to return.
+                {{ featuredBlog.description }}
               </p>
+
 
               <div class="featured-bottom">
 
                 <small>
-                  3 min read
+                  {{ featuredBlog.readTime }} read
                 </small>
 
-                <button @click.stop="openBlog(blogs[0])">
+                <button
+                  type="button"
+                  @click.stop="openBlog(featuredBlog)"
+                >
                   Read →
                 </button>
 
@@ -333,7 +554,7 @@ function explore() {
 
 
         <!-- ==================================================
-             QUOTE
+             REMINDER
         =================================================== -->
 
         <section class="reminder">
@@ -345,8 +566,8 @@ function explore() {
           </small>
 
           <p>
-            “Not every loop is a trap.<br />
-            Some loops are how you grow.”
+            “You don't have to do everything today.<br />
+            Just move something meaningful forward.”
           </p>
 
           <span class="reminder-heart">
@@ -360,17 +581,25 @@ function explore() {
              EXPLORE
         =================================================== -->
 
-        <section id="explore" class="explore">
+        <section
+          id="explore"
+          class="explore"
+        >
 
           <div class="section-head">
 
             <div>
-              <span>LITTLE THOUGHTS</span>
+
+              <span>
+                LITTLE THOUGHTS
+              </span>
 
               <h2>
-                More Thoughts
+                Explore
               </h2>
+
             </div>
+
 
             <small>
               different lens ♡
@@ -379,25 +608,40 @@ function explore() {
           </div>
 
 
+          <!-- CATEGORY PILLS -->
+
           <div class="category-tabs">
 
             <button
               v-for="item in categories"
-              :key="item"
-              :class="{ active: category === item }"
-              @click="category = item"
+              :key="item.name"
+              type="button"
+              :class="{
+                active: category === item.name
+              }"
+              @click="category = item.name"
             >
-              {{ item }}
+
+              {{ item.name }}
+
+              <span
+                v-if="categoryCount(item.name)"
+                class="category-count"
+              >
+                {{ categoryCount(item.name) }}
+              </span>
+
             </button>
 
           </div>
 
 
-          <!-- MOBILE HORIZONTAL / DESKTOP GRID -->
+          <!-- RESULTS -->
 
-          <div class="thought-list">
-
-            <!-- Actual blog -->
+          <div
+            v-if="filteredBlogs.length"
+            class="thought-list"
+          >
 
             <article
               v-for="blog in filteredBlogs"
@@ -406,135 +650,90 @@ function explore() {
               @click="openBlog(blog)"
             >
 
-              <div class="thought-art recursion-mini">
-
-                <div class="mini-sun"></div>
-
-                <div class="mini-mountain one"></div>
-                <div class="mini-mountain two"></div>
-
-                <div class="mini-sign">
-                  <span>continue →</span>
-                  <span>← return</span>
-                  <i></i>
-                </div>
-
-              </div>
-
-
-              <div class="thought-content">
-
-                <span class="tag">
-                  Life × Tech
-                </span>
-
-                <h3>
-                  {{ blog.title }}
-                </h3>
-
-                <p>
-                  {{ blog.description }}
-                </p>
-
-                <footer>
-                  <small>
-                    {{ blog.readTime }} read
-                  </small>
-
-                  <span>♡</span>
-                </footer>
-
-              </div>
-
-            </article>
-
-
-            <!-- Upcoming -->
-
-            <article
-              v-for="blog in upcoming"
-              :key="blog.id"
-              class="thought-card upcoming"
-            >
+              <!-- ART -->
 
               <div
                 class="thought-art"
-                :class="blog.art"
+                :class="`${blog.art}-mini`"
               >
 
-                <!-- HOURGLASS -->
+                <!-- RECURSION -->
 
-                <div
-                  v-if="blog.art === 'hourglass'"
-                  class="css-hourglass"
-                >
-                  <span class="glass-top"></span>
-                  <span class="glass-middle"></span>
-                  <span class="glass-bottom"></span>
-                </div>
+                <template v-if="blog.art === 'recursion'">
 
+                  <div class="mini-sun"></div>
 
-                <!-- ERROR -->
+                  <div class="mini-mountain one"></div>
+                  <div class="mini-mountain two"></div>
 
-                <div
-                  v-if="blog.art === 'error'"
-                  class="error-laptop"
-                >
-                  <div class="error-screen">
-                    ERROR
-                    <span>≠</span>
-                    LEARNING
+                  <div class="mini-sign">
+
+                    <span>
+                      continue →
+                    </span>
+
+                    <span>
+                      ← return
+                    </span>
+
+                    <i></i>
+
                   </div>
 
-                  <div class="error-keyboard"></div>
-                </div>
+                </template>
 
 
-                <!-- COMMIT -->
+                <!-- FOCUS -->
 
-                <div
-                  v-if="blog.art === 'commit'"
-                  class="version-art"
-                >
-                  <div class="version-circle">
-                    ↑
+                <template v-if="blog.art === 'focus'">
+
+                  <div class="mini-focus-ring">
+                    <span>01</span>
                   </div>
 
-                  <span>
-                    new<br />
-                    version<br />
-                    of me ♡
-                  </span>
-                </div>
+                  <div class="mini-focus-list">
+                    <span>✓ learn</span>
+                    <span>✓ practise</span>
+                    <span>• improve</span>
+                  </div>
 
-
-                <span class="coming-pill">
-                  coming soon
-                </span>
+                </template>
 
               </div>
 
 
+              <!-- COPY -->
+
               <div class="thought-content">
 
-                <span class="tag">
+                <span
+                  class="tag"
+                  :class="`tag-${blog.category.toLowerCase()}`"
+                >
                   {{ blog.category }}
                 </span>
 
+
                 <h3>
-                  {{ blog.title }}
+                  {{ blog.shortTitle }}
                 </h3>
+
 
                 <p>
                   {{ blog.description }}
                 </p>
 
+
                 <footer>
+
                   <small>
                     {{ blog.readTime }} read
                   </small>
 
-                  <span>♡</span>
+                  <span>
+                    ♡
+                  </span>
+
                 </footer>
 
               </div>
@@ -543,10 +742,33 @@ function explore() {
 
           </div>
 
+
+          <!-- EMPTY CATEGORY -->
+
+          <div
+            v-else
+            class="empty-category"
+          >
+
+            <span>
+              ✿
+            </span>
+
+            <strong>
+              Nothing here yet.
+            </strong>
+
+            <p>
+              A little {{ category.toLowerCase() }}
+              thought will appear here soon.
+            </p>
+
+          </div>
+
         </section>
 
 
-        <!-- FOOT NOTE -->
+        <!-- PAPER NOTE -->
 
         <section class="paper-note">
 
@@ -564,11 +786,14 @@ function explore() {
       </main>
 
 
-      <!-- MOBILE TAB BAR -->
+      <!-- MOBILE NAV -->
 
       <nav class="mobile-tabs">
 
-        <button class="active" @click="goHome">
+        <button
+          class="active"
+          @click="goHome"
+        >
           <span>⌂</span>
           Home
         </button>
@@ -593,7 +818,9 @@ function explore() {
     </template>
 
 
-    <!-- BLOG -->
+    <!-- ======================================================
+         DYNAMIC BLOG
+    ======================================================= -->
 
     <component
       v-else
