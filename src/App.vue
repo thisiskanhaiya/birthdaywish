@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref } from "vue";
-
+   
+import Sadhana from "./blogs/Sadhana.vue";
 import Focus from "./blogs/Focus.vue";
 import Recursion from "./blogs/Recursion.vue";
 import Pause from "./blogs/Pause.vue";  
@@ -22,6 +23,17 @@ const category = ref("All");
 */
 
 const blogs = [
+   {
+    id: "sadhana",
+    title: "Someone Should Build This in India",
+    shortTitle: "Someone Should Build This in India",
+    description:
+      "We are learning to control almost everything around us. Except ourselves.",
+    category: "Life",
+    readTime: "5 min",
+    component: Sadhana,
+    art: "sadhana",
+  },
    {
     id: "pause",
     title: "The Quiet Advantage of Not Rushing Everything",
