@@ -5,6 +5,7 @@ import Sadhana from "./blogs/Sadhana.vue";
 import Focus from "./blogs/Focus.vue";
 import Recursion from "./blogs/Recursion.vue";
 import Pause from "./blogs/Pause.vue";  
+import DebugLife from "./blogs/DebugLife.vue";
 
 const activeBlog = ref(null);
 const category = ref("All");
@@ -23,6 +24,17 @@ const category = ref("All");
 */
 
 const blogs = [
+   {
+  id: "debug-life",
+  title: "Life को Rebuild नहीं, Debug करो",
+  shortTitle: "Life को Debug करो 🐞",
+  description:
+    "हर गलत output का मतलब यह नहीं कि पूरा system खराब है।",
+  category: "Tech",
+  readTime: "3 min",
+  component: DebugLife,
+  art: "debug",
+},
    {
     id: "sadhana",
     title: "Someone Should Build This in India",
