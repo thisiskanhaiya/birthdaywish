@@ -6,6 +6,7 @@ import Focus from "./blogs/Focus.vue";
 import Recursion from "./blogs/Recursion.vue";
 import Pause from "./blogs/Pause.vue";  
 import DebugLife from "./blogs/DebugLife.vue";
+import ThreeThings from "./blogs/ThreeThings.vue";   
 
 const activeBlog = ref(null);
 const category = ref("All");
@@ -24,6 +25,17 @@ const category = ref("All");
 */
 
 const blogs = [
+   {
+  id: "three-things",
+  title: "तीन चीज़ें जो हर इंसान को अपने भीतर बचाकर रखनी चाहिए",
+  shortTitle: "आत्मविश्वास। औदार्य। कारुण्य।",
+  description:
+    "कुछ चीज़ें ऐसी हैं जिन्हें कोई आपसे चुरा नहीं सकता।",
+  category: "Life",
+  readTime: "6 min",
+  component: ThreeThings,
+  art: "three",
+},
    {
   id: "debug-life",
   title: "Life को Rebuild नहीं, Debug करो",
